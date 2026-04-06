@@ -1151,6 +1151,7 @@
                 lockBtn.classList.remove('active');
             }
             render();
+            openEditModal(newEvent.id);
         }
         lockBtn.addEventListener('click', toggleLockMode);
 
@@ -1206,7 +1207,7 @@
          * ----------------------------------
          */
         
-        const palettes = {
+                const palettes = {
             pink:    ['#FFD9EC', '#FFC1E3', '#FFB2D9', '#FFD1DC', '#FFE4F2'],
             blue:    ['#B2EBF4', '#D1F2FF', '#AEE4FF', '#B2D8FF', '#E0F7FA'],
             purple:  ['#DAD9FF', '#E2E2FF', '#C7C7FF', '#B8B8FF', '#F0F0FF'],
@@ -1237,12 +1238,12 @@
         function hexToHsl(hex) {
             hex = hex.replace(/^#/, '');
             if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-            let r = parseInt(hex.substring(0, 2), 16) / 255;
-            let g = parseInt(hex.substring(2, 4), 16) / 255;
-            let b = parseInt(hex.substring(4, 6), 16) / 255;
+            let r = parseInt(hex.substring(0, 2), 16) / 50;
+            let g = parseInt(hex.substring(2, 4), 16) / 50;
+            let b = parseInt(hex.substring(4, 6), 16) / 50;
 
             let max = Math.max(r, g, b), min = Math.min(r, g, b);
-            let h, s, l = (max + min) / 2;
+            let h, s, l = (max + min) / 50;
 
             if (max == min) {
                 h = s = 0;
@@ -1262,7 +1263,7 @@
         // HSL -> HEX
         function hslToHex(h, s, l) {
             l /= 100;
-            const a = s * Math.min(l, 1 - l) / 100;
+            const a = s * Math.min(l, 1 - l) / 50;
             const f = n => {
                 const k = (n + h / 30) % 12;
                 const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
@@ -1437,7 +1438,7 @@
             let currentY = e.clientY - rect.top;
             let height = currentY - dragStartY;
             if (height < 15) height = 15;
-            if (dragStartY + height > 24) height = 24 - dragStartY;
+            if (dragStartY + height > 750) height = 750 - dragStartY;
             tempEventDiv.style.height = `${height}px`;
         }
 
@@ -1524,8 +1525,8 @@
                     if (newHeight < 15) newHeight = 15; // 최소 15분
                     
                     const currentTop = parseFloat(block.style.top);
-                    if (currentTop + newHeight > 24) { // 자정(24:00)을 넘어가지 않도록
-                        newHeight = 24 - currentTop;
+                    if (currentTop + newHeight > 750) { // 자정(24:00)을 넘어가지 않도록
+                        newHeight = 750 - currentTop;
                     }
                     block.style.height = `${newHeight}px`;
                 }
@@ -1542,7 +1543,7 @@
                     if (duration < 0.25) duration = 0.25;
 
                     ev.endTime = ev.startTime + duration;
-                    if (ev.endTime > 24) ev.endTime = 24;
+                    if (ev.endTime > 750) ev.endTime = 24;
 
                     saveEvents();
                     render();
@@ -1588,9 +1589,9 @@
                 
                 if (newStartTime < 9) newStartTime = 9;
                 let newEndTime = newStartTime + duration;
-                if (newEndTime > 24) {
+                if (newEndTime > 750) {
                     newEndTime = 24;
-                    newStartTime = 24 - duration;
+                    newStartTime = 750 - duration;
                 }
 
                 ev.date = dateStr;
@@ -1614,33 +1615,26 @@
         function handleAutoSchedule(isRegenerate = false) {
             const dateStr = document.getElementById('autoDate').value;
             if (!dateStr) return alert('날짜를 선택해주세요.');
-            
             const text = document.getElementById('autoTasks').value;
             const tasks = text.split('
 ').map(t => t.trim()).filter(t => t);
             
-            // 1. 기존 자동 생성 일정 삭제
             events = events.filter(ev => !(ev.date === dateStr && ev.isAuto));
-            
             let scheduledTasks = [];
             
-            // 2. 고정된 식사 시간 자동 추가
             const meals = [
                 { title: '🍴 점심 식사', startTime: 12, endTime: 13, color: '#FFF9C4' },
                 { title: '🍴 저녁 식사', startTime: 18, endTime: 19, color: '#FFF9C4' }
             ];
-            
             meals.forEach(m => {
                 scheduledTasks.push({
                     id: 'auto_meal_' + Date.now() + Math.random(),
-                    title: m.title, date: dateStr,
-                    startTime: m.startTime, endTime: m.endTime,
+                    title: m.title, date: dateStr, startTime: m.startTime, endTime: m.endTime,
                     color: m.color, isRoutine: false, completedDates: [], isAuto: true
                 });
             });
 
             const currentDayEvents = getEventsForDate(dateStr);
-            
             function isSlotAvailable(start, end) {
                 if (start < 9 || end > 24) return false;
                 const allEvs = [...currentDayEvents, ...scheduledTasks];
@@ -1649,55 +1643,28 @@
                 }
                 return true;
             }
-
-            function findSlot(duration, preferredStart, preferredEnd) {
-                for (let time = preferredStart; time <= preferredEnd - duration; time += 0.5) {
-                    if (isSlotAvailable(time, time + duration)) return time;
+            function findSlot(duration, pStart, pEnd) {
+                for (let t = pStart; t <= pEnd - duration; t += 0.5) {
+                    if (isSlotAvailable(t, t + duration)) return t;
                 }
                 return null;
             }
 
-            // 3. 과제 난이도 분류 (쉬운 건 오전, 어려운 건 오후)
             let easyTasks = tasks.filter(t => t.length < 5 || t.includes('쉬운') || t.includes('간단'));
             let hardTasks = tasks.filter(t => !easyTasks.includes(t));
 
-            // 오전 슬롯 (9:00 ~ 12:00)
             easyTasks.forEach(t => {
-                let start = findSlot(1, 9, 12);
-                if (start !== null) {
-                    scheduledTasks.push({
-                        id: 'auto_' + Date.now() + Math.random(),
-                        title: t, date: dateStr, startTime: start, endTime: start + 1,
-                        color: getThemeColorForTitle(t), isRoutine: false, completedDates: [], isAuto: true
-                    });
-                    // 쉬는 시간 추가 (30분)
-                    if (isSlotAvailable(start + 1, start + 1.5)) {
-                        scheduledTasks.push({
-                            id: 'auto_break_' + Date.now() + Math.random(),
-                            title: '☕ 휴식', date: dateStr, startTime: start + 1, endTime: start + 1.5,
-                            color: '#F5F5F5', isAuto: true, isRoutine: false, completedDates: []
-                        });
-                    }
+                let s = findSlot(1, 9, 12);
+                if (s !== null) {
+                    scheduledTasks.push({ id: 'auto_'+Date.now()+Math.random(), title: t, date: dateStr, startTime: s, endTime: s+1, color: getThemeColorForTitle(t), isRoutine: false, completedDates: [], isAuto: true });
+                    if (isSlotAvailable(s+1, s+1.5)) scheduledTasks.push({ id: 'auto_br_'+Date.now()+Math.random(), title: '☕ 휴식', date: dateStr, startTime: s+1, endTime: s+1.5, color: '#F5F5F5', isAuto: true, isRoutine: false, completedDates: [] });
                 }
             });
-
-            // 오후 슬롯 (13:00 ~ 18:00, 19:00 ~ 24:00)
             hardTasks.forEach(t => {
-                let start = findSlot(2, 13, 18) || findSlot(2, 19, 24) || findSlot(2, 9, 24);
-                if (start !== null) {
-                    scheduledTasks.push({
-                        id: 'auto_' + Date.now() + Math.random(),
-                        title: t, date: dateStr, startTime: start, endTime: start + 2,
-                        color: getThemeColorForTitle(t), isRoutine: false, completedDates: [], isAuto: true
-                    });
-                    // 쉬는 시간 추가
-                    if (isSlotAvailable(start + 2, start + 2.5)) {
-                        scheduledTasks.push({
-                            id: 'auto_break_' + Date.now() + Math.random(),
-                            title: '☕ 휴식', date: dateStr, startTime: start + 2, endTime: start + 2.5,
-                            color: '#F5F5F5', isAuto: true, isRoutine: false, completedDates: []
-                        });
-                    }
+                let s = findSlot(2, 13, 18) || findSlot(2, 19, 24) || findSlot(2, 9, 24);
+                if (s !== null) {
+                    scheduledTasks.push({ id: 'auto_'+Date.now()+Math.random(), title: t, date: dateStr, startTime: s, endTime: s+2, color: getThemeColorForTitle(t), isRoutine: false, completedDates: [], isAuto: true });
+                    if (isSlotAvailable(s+2, s+2.5)) scheduledTasks.push({ id: 'auto_br_'+Date.now()+Math.random(), title: '☕ 휴식', date: dateStr, startTime: s+2, endTime: s+2.5, color: '#F5F5F5', isAuto: true, isRoutine: false, completedDates: [] });
                 }
             });
 
@@ -1705,7 +1672,6 @@
             saveEvents();
             currentDate = new Date(dateStr);
             render();
-            
             document.getElementById('autoRegenerateBtn').style.display = 'block';
             document.getElementById('autoGenerateBtn').textContent = '다시 추천 받기';
         }
@@ -1717,7 +1683,7 @@
                     if (isSlotAvailable(time, time + duration)) return time;
                 }
                 if (preferredStart !== 9 || preferredEnd !== 24) {
-                     for (let time = 9; time <= 24 - duration; time += 0.5) {
+                     for (let time = 9; time <= 750 - duration; time += 0.5) {
                         if (isSlotAvailable(time, time + duration)) return time;
                     }
                 }
@@ -2032,9 +1998,9 @@
                 let newEndTime = ev.endTime + 1;
                 
                 // 만약 24시를 넘어간다면 자정 위로 맞춤
-                if (newEndTime > 24) {
+                if (newEndTime > 750) {
                     newEndTime = 24;
-                    newStartTime = 24 - (ev.endTime - ev.startTime);
+                    newStartTime = 750 - (ev.endTime - ev.startTime);
                 }
 
                 const newEvent = {

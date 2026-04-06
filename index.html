@@ -254,7 +254,7 @@
         .weekly-body {
             display: grid;
             grid-template-columns: 60px repeat(7, 1fr);
-            height: 900px; /* 15시간 * 60px (9:00 ~ 24:00) */
+            height: 1500px; /* 15시간 * 100px (9:00 ~ 24:00) */
             position: relative;
         }
 
@@ -265,7 +265,7 @@
         }
 
         .time-slot {
-            height: 60px;
+            height: 100px;
             text-align: right;
             padding-right: 8px;
             font-size: 12px;
@@ -283,7 +283,7 @@
         .day-col {
             border-left: 1px solid #e9e9e7;
             position: relative;
-            background-size: 100% 60px;
+            background-size: 100% 100px;
             background-image: linear-gradient(to bottom, #f7f7f5 1px, transparent 1px);
             cursor: crosshair;
             transition: background-color 0.2s;
@@ -718,6 +718,12 @@
             }
         }
     
+
+        .event-block.locked {
+            border: 3px solid #333;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    
     </style>
 </head>
 <body>
@@ -1117,7 +1123,7 @@
             let currentY = e.clientY - rect.top;
             let height = currentY - dragStartY;
             if (height < 15) height = 15;
-            if (dragStartY + height > 900) height = 900 - dragStartY;
+            if (dragStartY + height > 1500) height = 1500 - dragStartY;
             tempEventDiv.style.height = `${height}px`;
         }
 
@@ -1131,7 +1137,7 @@
             const height = parseFloat(tempEventDiv.style.height);
             const color = tempEventDiv.style.backgroundColor;
 
-            const startTime = 9 + (dragStartY / 60);
+            const startTime = 9 + (dragStartY / 100);
             const endTime = startTime + (height / 60);
 
             const newEvent = {
@@ -1203,8 +1209,8 @@
                     if (newHeight < 15) newHeight = 15; // 최소 15분
                     
                     const currentTop = parseFloat(block.style.top);
-                    if (currentTop + newHeight > 900) { // 자정(24:00)을 넘어가지 않도록
-                        newHeight = 900 - currentTop;
+                    if (currentTop + newHeight > 1500) { // 자정(24:00)을 넘어가지 않도록
+                        newHeight = 1500 - currentTop;
                     }
                     block.style.height = `${newHeight}px`;
                 }
@@ -1216,7 +1222,7 @@
                     document.removeEventListener('mouseup', onMouseUp);
 
                     let finalHeight = parseFloat(block.style.height);
-                    let duration = finalHeight / 60;
+                    let duration = finalHeight / 100;
                     duration = Math.round(duration * 4) / 4; // 15분 단위로 스냅
                     if (duration < 0.25) duration = 0.25;
 
@@ -1261,7 +1267,7 @@
                 const dropY = e.clientY - rect.top - offsetY;
 
                 const duration = ev.endTime - ev.startTime;
-                let newStartTime = 9 + (dropY / 60);
+                let newStartTime = 9 + (dropY / 100);
                 
                 newStartTime = Math.round(newStartTime * 4) / 4; 
                 
@@ -1442,10 +1448,11 @@
                     block.className = 'event-block';
                     const completed = isEventCompleted(ev, dateStr);
                     if (completed) block.classList.add('completed');
+                    if (ev.isRoutine) block.classList.add('locked');
                     
                     block.style.backgroundColor = ev.color;
-                    const top = (ev.startTime - 9) * 60;
-                    const height = (ev.endTime - ev.startTime) * 60;
+                    const top = (ev.startTime - 9) * 100;
+                    const height = (ev.endTime - ev.startTime) * 100;
                     block.style.top = `${top}px`;
                     block.style.height = `${height}px`;
                     block.style.zIndex = Math.floor(top);

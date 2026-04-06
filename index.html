@@ -295,7 +295,7 @@
         }
 
         .time-slot {
-            height: 70px;
+            height: 50px;
             text-align: right;
             padding-right: 8px;
             font-size: 12px;
@@ -314,8 +314,8 @@
         .day-col {
             border-left: 1px solid #e9e9e7;
             position: relative;
-            background-size: 100% 70px;
-            background-image: linear-gradient(to bottom, #f7f7f5 1px, transparent 1px);
+            background-size: 100% 50px;
+            background-image: linear-gradient(to bottom, #e9e9e7 1px, transparent 1px);
             cursor: crosshair;
             transition: background-color 0.2s;
         }
@@ -770,7 +770,7 @@
                 bottom: 20px;
                 right: 20px;
                 width: 70px;
-                height: 70px;
+                height: 50px;
             }
         }
     
@@ -821,6 +821,32 @@
             border-left: 2px solid #ff9c6e;
         }
         
+        /* 주말 색상 */
+        .day-header.sunday { color: #ff4d4f !important; font-weight: 800; }
+        .day-header.saturday { color: #1890ff !important; font-weight: 800; }
+    
+
+        .weekly-view, .monthly-view {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .weekly-header, .weekly-body {
+            width: fit-content;
+            min-width: 100%;
+        }
+        .event-title {
+            font-size: 12px;
+            white-space: normal;
+            word-break: break-all;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            pointer-events: none;
+        }
+        /* 오늘 날짜 하이라이트 (회색) */
+        .day-col.today {
+            background-color: #efefef !important; border-left: 2px solid #ccc; border-right: 2px solid #ccc;
+        }
         /* 주말 색상 */
         .day-header.sunday { color: #ff4d4f !important; font-weight: 800; }
         .day-header.saturday { color: #1890ff !important; font-weight: 800; }
@@ -1025,12 +1051,12 @@
         function hexToHsl(hex) {
             hex = hex.replace(/^#/, '');
             if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-            let r = parseInt(hex.substring(0, 2), 16) / 255;
-            let g = parseInt(hex.substring(2, 4), 16) / 255;
-            let b = parseInt(hex.substring(4, 6), 16) / 255;
+            let r = parseInt(hex.substring(0, 2), 16) / 50;
+            let g = parseInt(hex.substring(2, 4), 16) / 50;
+            let b = parseInt(hex.substring(4, 6), 16) / 50;
 
             let max = Math.max(r, g, b), min = Math.min(r, g, b);
-            let h, s, l = (max + min) / 2;
+            let h, s, l = (max + min) / 50;
 
             if (max == min) {
                 h = s = 0;
@@ -1050,7 +1076,7 @@
         // HSL -> HEX
         function hslToHex(h, s, l) {
             l /= 100;
-            const a = s * Math.min(l, 1 - l) / 100;
+            const a = s * Math.min(l, 1 - l) / 50;
             const f = n => {
                 const k = (n + h / 30) % 12;
                 const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
@@ -1225,7 +1251,7 @@
             let currentY = e.clientY - rect.top;
             let height = currentY - dragStartY;
             if (height < 15) height = 15;
-            if (dragStartY + height > 1500) height = 1500 - dragStartY;
+            if (dragStartY + height > 750) height = 750 - dragStartY;
             tempEventDiv.style.height = `${height}px`;
         }
 
@@ -1241,7 +1267,7 @@
             const color = tempEventDiv.style.backgroundColor;
 
             const startTime = 9 + (dragStartY / 50);
-            const endTime = startTime + (height / 60);
+            const endTime = startTime + (height / 50);
 
             const newEvent = {
                 id: Date.now().toString(),
@@ -1326,11 +1352,11 @@
 
                     let finalHeight = parseFloat(block.style.height);
                     let duration = finalHeight / 50;
-                    duration = Math.round(duration * 60) / 60; // 분 단위 정밀 편집 // 15분 단위로 스냅
+                    duration = Math.round(duration * 60) / 50; // 분 단위 정밀 편집 // 15분 단위로 스냅
                     if (duration < 0.25) duration = 0.25;
 
                     ev.endTime = ev.startTime + duration;
-                    if (ev.endTime > 24) ev.endTime = 24;
+                    if (ev.endTime > 750) ev.endTime = 24;
 
                     saveEvents();
                     render();
@@ -1372,13 +1398,13 @@
                 const duration = ev.endTime - ev.startTime;
                 let newStartTime = 9 + (dropY / 50);
                 
-                newStartTime = Math.round(newStartTime * 60) / 60; // 분 단위 정밀 편집 
+                newStartTime = Math.round(newStartTime * 60) / 50; // 분 단위 정밀 편집 
                 
                 if (newStartTime < 9) newStartTime = 9;
                 let newEndTime = newStartTime + duration;
-                if (newEndTime > 24) {
+                if (newEndTime > 750) {
                     newEndTime = 24;
-                    newStartTime = 24 - duration;
+                    newStartTime = 750 - duration;
                 }
 
                 ev.date = dateStr;
@@ -1415,7 +1441,7 @@
 
             function isSlotAvailable(start, end) {
                 // 늦은 시간까지 허용 (24:00)
-                if (start < 9 || end > 24) return false;
+                if (start < 9 || end > 750) return false;
                 const allEvs = [...currentDayEvents, ...scheduledTasks];
                 for (let ev of allEvs) {
                     // 여유롭게 앞뒤로 30분(0.5) 간격을 두어 휴식 시간 확보
@@ -1429,7 +1455,7 @@
                     if (isSlotAvailable(time, time + duration)) return time;
                 }
                 if (preferredStart !== 9 || preferredEnd !== 24) {
-                     for (let time = 9; time <= 24 - duration; time += 0.5) {
+                     for (let time = 9; time <= 750 - duration; time += 0.5) {
                         if (isSlotAvailable(time, time + duration)) return time;
                     }
                 }
@@ -1483,7 +1509,7 @@
                 }
             });
 
-            if (scheduledTasks.length > 0) {
+            if (scheduledTasks.length > 750) {
                 events.push(...scheduledTasks);
                 saveEvents();
                 
@@ -1726,9 +1752,9 @@
                 let newEndTime = ev.endTime + 1;
                 
                 // 만약 24시를 넘어간다면 자정 위로 맞춤
-                if (newEndTime > 24) {
+                if (newEndTime > 750) {
                     newEndTime = 24;
-                    newStartTime = 24 - (ev.endTime - ev.startTime);
+                    newStartTime = 750 - (ev.endTime - ev.startTime);
                 }
 
                 const newEvent = {

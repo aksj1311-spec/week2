@@ -78,7 +78,7 @@
         /* 일정 블록 */
         .event-block {
             position: absolute; left: 2px; right: 2px; border-radius: 8px; padding: 4px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: transform 0.2s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(255,255,255,0.3); transition: transform 0.2s;
             cursor: pointer; overflow: hidden; display: flex; flex-direction: column;
         }
         .event-block.locked { border: 3px solid #333; }
@@ -320,29 +320,34 @@
         lockBtn.addEventListener('click', toggleLockMode);
 
         /** 테마 및 색상 **/
-        const palettes = {
-            pink:    ['#FFD9EC', '#FFC1E3', '#FFB2D9', '#FFD1DC', '#FFE4F2'],
-            blue:    ['#B2EBF4', '#D1F2FF', '#AEE4FF', '#B2D8FF', '#E0F7FA'],
-            purple:  ['#DAD9FF', '#E2E2FF', '#C7C7FF', '#B8B8FF', '#F0F0FF'],
-            green:   ['#CEFBC9', '#E4FFD9', '#B2F5B2', '#D9FFDF', '#F1FFE8'],
-            rainbow: ['#FFD9EC', '#B2EBF4', '#DAD9FF', '#CEFBC9', '#FFF9C4']
+                const palettes = {
+            pink:    ['#FFD9EC', '#FFADBC', '#FF8E9E', '#FFB7C5', '#FF6B81', '#FFC1CC'],
+            blue:    ['#B2EBF4', '#81D4FA', '#4FC3F7', '#29B6F6', '#80DEEA', '#B3E5FC'],
+            purple:  ['#DAD9FF', '#B39DDB', '#9575CD', '#CE93D8', '#B388FF', '#D1C4E9'],
+            green:   ['#CEFBC9', '#A5D6A7', '#81C784', '#66BB6A', '#C8E6C9', '#B9F6CA'],
+            rainbow: ['#FFD9EC', '#B2EBF4', '#DAD9FF', '#CEFBC9', '#FFF9C4', '#FFCCBC', '#D1C4E9']
         };
         let currentTheme = localStorage.getItem('timeblocks_theme') || 'pink';
-        let titleColorMap = {};
+        function getHashCode(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return Math.abs(hash);
+        }
+
         function getThemeColorForTitle(title) {
             if (!title) title = '새 일정';
-            if (titleColorMap[title]) return titleColorMap[title];
             const colors = palettes[currentTheme] || palettes['pink'];
-            const color = colors[Object.keys(titleColorMap).length % colors.length];
-            titleColorMap[title] = color;
-            return color;
+            // 제목의 해시값을 사용하여 색상 배열에서 인덱스 결정 (일관성 유지)
+            const index = getHashCode(title) % colors.length;
+            return colors[index];
         }
         document.querySelectorAll('.theme-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 currentTheme = e.target.dataset.theme;
                 localStorage.setItem('timeblocks_theme', currentTheme);
                 document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === currentTheme));
-                titleColorMap = {};
                 events.forEach(ev => ev.color = getThemeColorForTitle(ev.title));
                 saveEvents(); render();
             });

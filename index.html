@@ -300,6 +300,7 @@
             right: 4px;
             border-radius: 12px;
             padding: 8px;
+            padding-bottom: 12px; /* 리사이즈 핸들 여유공간 */
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
             transition: transform 0.2s ease, filter 0.2s ease, background-color 0.2s;
             cursor: pointer;
@@ -330,6 +331,20 @@
             padding-right: 20px; /* 버튼과 겹치지 않게 */
         }
 
+        /* 크기 조절 핸들 */
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            cursor: ns-resize;
+            z-index: 10;
+        }
+        .resize-handle:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
         /* 내부 버튼 스타일 */
         .event-block .lock-btn {
             position: absolute;
@@ -353,7 +368,7 @@
 
         .event-block .check-btn {
             position: absolute;
-            bottom: 4px;
+            bottom: 8px; /* 리사이즈 피해서 올림 */
             left: 4px;
             cursor: pointer;
             background: transparent;
@@ -562,6 +577,8 @@
         #saveBtn:hover { background: #000; }
         #deleteBtn { background: #ffebee; color: #c62828; }
         #deleteBtn:hover { background: #ffcdd2; }
+        #copyBtn { background: #e3f2fd; color: #0056b3; }
+        #copyBtn:hover { background: #cce5ff; }
         #cancelBtn { background: #f0f0f0; color: #333; }
         #cancelBtn:hover { background: #e0e0e0; }
     </style>
@@ -657,6 +674,7 @@
             </div>
             <div class="modal-actions">
                 <button id="deleteBtn">삭제</button>
+                <button id="copyBtn">복사</button>
                 <button id="cancelBtn">취소</button>
                 <button id="saveBtn">저장</button>
             </div>
@@ -671,7 +689,7 @@
          */
         
         let currentDate = new Date(); // 기본값: 오늘
-        let currentView = 'weekly'; // 'weekly' | 'monthly'
+        let currentView = 'weekly'; // 'weekly' | 'monthly' 
 
         // LocalStorage에서 데이터 불러오기
         let events = JSON.parse(localStorage.getItem('timeblocks_events')) || [];
@@ -801,12 +819,12 @@
 
         /**
          * ----------------------------------
-         * 주간 뷰: 생성 및 드래그 앤 드롭
+         * 주간 뷰: 생성, 이동 및 리사이즈
          * ----------------------------------
          */
         
         let isCreating = false;
-        let isDraggingBlock = false; // 드래그 중 클릭(모달 오픈) 방지용 플래그
+        let isDraggingBlock = false; // 드래그/리사이즈 중 클릭(모달 오픈) 방지용 플래그
         let dragStartY = 0;
         let tempEventDiv = null;
         let activeDayCol = null;
@@ -885,7 +903,6 @@
                 e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/plain', ev.id);
                 const rect = block.getBoundingClientRect();
-                // 마우스가 블록 내 어디를 잡았는지 위치 기억
                 e.dataTransfer.setData('offsetY', e.clientY - rect.top);
                 setTimeout(() => block.style.opacity = '0.5', 0);
             });
@@ -897,6 +914,62 @@
             block.addEventListener('click', (e) => {
                 if (isDraggingBlock) return;
                 openEditModal(ev.id);
+            });
+        }
+
+        // --- 3. 크기 조절 (칸 늘리고 줄이기) ---
+        function setupBlockResize(block, ev) {
+            const handle = document.createElement('div');
+            handle.className = 'resize-handle';
+            block.appendChild(handle);
+
+            handle.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                block.draggable = false;
+                isDraggingBlock = true;
+                
+                let isResizing = true;
+                let startY = e.clientY;
+                let startHeight = parseFloat(block.style.height);
+
+                function onMouseMove(moveEv) {
+                    if (!isResizing) return;
+                    let diff = moveEv.clientY - startY;
+                    let newHeight = startHeight + diff;
+                    if (newHeight < 15) newHeight = 15; // 최소 15분
+                    
+                    const currentTop = parseFloat(block.style.top);
+                    if (currentTop + newHeight > 900) { // 자정(24:00)을 넘어가지 않도록
+                        newHeight = 900 - currentTop;
+                    }
+                    block.style.height = `${newHeight}px`;
+                }
+
+                function onMouseUp(upEv) {
+                    if (!isResizing) return;
+                    isResizing = false;
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+
+                    let finalHeight = parseFloat(block.style.height);
+                    let duration = finalHeight / 60;
+                    duration = Math.round(duration * 4) / 4; // 15분 단위로 스냅
+                    if (duration < 0.25) duration = 0.25;
+
+                    ev.endTime = ev.startTime + duration;
+                    if (ev.endTime > 24) ev.endTime = 24;
+
+                    saveEvents();
+                    render();
+                    
+                    setTimeout(() => {
+                        block.draggable = true;
+                        isDraggingBlock = false;
+                    }, 100);
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
             });
         }
 
@@ -926,7 +999,6 @@
                 const duration = ev.endTime - ev.startTime;
                 let newStartTime = 9 + (dropY / 60);
                 
-                // 15분 단위(0.25) 스냅 기능
                 newStartTime = Math.round(newStartTime * 4) / 4; 
                 
                 if (newStartTime < 9) newStartTime = 9;
@@ -936,7 +1008,6 @@
                     newStartTime = 24 - duration;
                 }
 
-                // 업데이트
                 ev.date = dateStr;
                 ev.startTime = newStartTime;
                 ev.endTime = newEndTime;
@@ -949,7 +1020,7 @@
 
         /**
          * ----------------------------------
-         * 하루 일정 자동 추천 로직
+         * 하루 일정 자동 추천 로직 (여유로운 배분)
          * ----------------------------------
          */
         
@@ -970,20 +1041,22 @@
             let failedTasks = [];
 
             function isSlotAvailable(start, end) {
-                if (start < 9 || end > 23) return false;
+                // 늦은 시간까지 허용 (24:00)
+                if (start < 9 || end > 24) return false;
                 const allEvs = [...currentDayEvents, ...scheduledTasks];
                 for (let ev of allEvs) {
-                    if (start < ev.endTime && end > ev.startTime) return false;
+                    // 여유롭게 앞뒤로 30분(0.5) 간격을 두어 휴식 시간 확보
+                    if (start < ev.endTime + 0.5 && end > ev.startTime - 0.5) return false;
                 }
                 return true;
             }
 
-            function findSlot(duration, preferredStart = 9, preferredEnd = 23) {
+            function findSlot(duration, preferredStart = 9, preferredEnd = 24) {
                 for (let time = preferredStart; time <= preferredEnd - duration; time += 0.5) {
                     if (isSlotAvailable(time, time + duration)) return time;
                 }
-                if (preferredStart !== 9 || preferredEnd !== 23) {
-                     for (let time = 9; time <= 23 - duration; time += 0.5) {
+                if (preferredStart !== 9 || preferredEnd !== 24) {
+                     for (let time = 9; time <= 24 - duration; time += 0.5) {
                         if (isSlotAvailable(time, time + duration)) return time;
                     }
                 }
@@ -992,7 +1065,7 @@
 
             let parsedTasks = tasks.map(t => {
                 let duration = 1;
-                let pStart = 9, pEnd = 23;
+                let pStart = 9, pEnd = 24;
                 let priority = 3;
                 
                 if (t.includes('밥') || t.includes('식사') || t.includes('점심') || t.includes('저녁')) {
@@ -1001,7 +1074,6 @@
                 } else if (t.includes('운동')) {
                     duration = 1.5;
                     priority = 2;
-                    pStart = 18; pEnd = 22;
                 } else if (t.includes('공부') || t.includes('과제')) {
                     duration = 2;
                 }
@@ -1016,7 +1088,7 @@
                 if (task.priority === 1) { 
                     startTime = findSlot(task.duration, 12, 14);
                     if (startTime === null) startTime = findSlot(task.duration, 18, 20);
-                    if (startTime === null) startTime = findSlot(task.duration, 9, 23);
+                    if (startTime === null) startTime = findSlot(task.duration, 9, 24);
                 } else {
                     startTime = findSlot(task.duration, task.pStart, task.pEnd);
                 }
@@ -1053,7 +1125,7 @@
                 document.getElementById('autoGenerateBtn').textContent = '추가 추천 받기';
                 
                 if (failedTasks.length > 0) {
-                    alert('빈 시간이 부족하여 다음 일정은 배치하지 못했습니다:\n' + failedTasks.join(', '));
+                    alert('일정을 여유롭게 배치할 수 있는 빈 시간이 부족합니다:\n' + failedTasks.join(', '));
                 }
             } else {
                 alert('배치할 수 있는 빈 시간이 없습니다.');
@@ -1124,7 +1196,8 @@
                         </button>
                     `;
                     
-                    setupBlockDrag(block, ev);
+                    setupBlockDrag(block, ev); // 크기 조절 핸들 추가
+                    setupBlockResize(block, ev); 
                     
                     dayCol.appendChild(block);
                 });
@@ -1249,6 +1322,36 @@
             if (!editingEventId) return;
             events = events.filter(e => e.id !== editingEventId);
             saveEvents();
+            closeEditModal();
+            render();
+        });
+
+        // 복사 붙여넣기 기능 (모달 내부 버튼)
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            if (!editingEventId) return;
+            const ev = events.find(e => e.id === editingEventId);
+            if (ev) {
+                // 원래 일정의 바로 아래 시간(1시간 뒤)에 똑같은 일정 복사 생성
+                let newStartTime = ev.startTime + 1;
+                let newEndTime = ev.endTime + 1;
+                
+                // 만약 24시를 넘어간다면 자정 위로 맞춤
+                if (newEndTime > 24) {
+                    newEndTime = 24;
+                    newStartTime = 24 - (ev.endTime - ev.startTime);
+                }
+
+                const newEvent = {
+                    ...ev,
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                    startTime: newStartTime,
+                    endTime: newEndTime,
+                    completedDates: [] // 복사본은 완료 상태 초기화
+                };
+
+                events.push(newEvent);
+                saveEvents();
+            }
             closeEditModal();
             render();
         });

@@ -265,7 +265,7 @@
 
         .weekly-header {
             display: grid;
-            grid-template-columns: 40px repeat(7, 85px);
+            grid-template-columns: 40px repeat(7, 100px);
             border-bottom: 1px solid #e9e9e7;
             background: #f7f7f5;
         }
@@ -283,7 +283,7 @@
 
         .weekly-body {
             display: grid;
-            grid-template-columns: 40px repeat(7, 85px);
+            grid-template-columns: 40px repeat(7, 100px);
             height: 750px; /* 15시간 * 50px (9:00 ~ 24:00) */
             position: relative;
         }
@@ -314,11 +314,13 @@
         .day-col {
             border-left: 1px solid #e9e9e7;
             position: relative;
-            background-size: 100% 50px;
-            background-image: linear-gradient(to bottom, #e9e9e7 1px, transparent 1px);
+            height: 100%;
+            background-image: repeating-linear-gradient(to bottom, #ccc, #ccc 1px, transparent 1px, transparent 50px);
+            background-repeat: repeat-y;
             cursor: crosshair;
             transition: background-color 0.2s;
         }
+        
         
         .day-col.drag-over {
             background-color: rgba(0, 123, 255, 0.05);
@@ -486,6 +488,7 @@
             flex-direction: column;
             background: #ffffff;
             transition: background-color 0.2s;
+            background-repeat: repeat;
         }
 
         .month-day-cell:nth-child(7n) {
@@ -696,7 +699,7 @@
                 width: 100%;
             }
             .weekly-header, .weekly-body {
-                grid-template-columns: 40px repeat(7, 85px);
+                grid-template-columns: 40px repeat(7, 100px);
             }
             .weekly-header > div {
                 font-size: 11px;
@@ -810,11 +813,25 @@
             height: 750px; /* 15시간 * 50px */
         }
         .time-slot, .day-col {
-            height: 50px;
+            border-left: 1px solid #e9e9e7;
+            position: relative;
+            height: 100%;
+            background-image: repeating-linear-gradient(to bottom, #ccc, #ccc 1px, transparent 1px, transparent 50px);
+            background-repeat: repeat-y;
+            cursor: crosshair;
+            transition: background-color 0.2s;
         }
+        
         .day-col {
-            background-size: 100% 50px;
+            border-left: 1px solid #e9e9e7;
+            position: relative;
+            height: 100%;
+            background-image: repeating-linear-gradient(to bottom, #ccc, #ccc 1px, transparent 1px, transparent 50px);
+            background-repeat: repeat-y;
+            cursor: crosshair;
+            transition: background-color 0.2s;
         }
+        
         .event-title {
             font-size: 11px;
             font-weight: 700;
@@ -827,44 +844,29 @@
             pointer-events: none;
         }
         
-        /* 오늘 날짜 하이라이트 */
-        .day-col.today {
-            background-color: rgba(255, 251, 230, 0.6);
-            border-right: 2px solid #ff9c6e;
-            border-left: 2px solid #ff9c6e;
-        }
         
         /* 주말 색상 */
         .day-header.sunday { color: #ff4d4f !important; font-weight: 800; }
         .day-header.saturday { color: #1890ff !important; font-weight: 800; }
     
 
-        .weekly-view, .monthly-view {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+        
+    
+
+        .day-col {
+            border-left: 1px solid #e9e9e7;
+            position: relative;
+            height: 100%;
+            background-image: repeating-linear-gradient(to bottom, #ccc, #ccc 1px, transparent 1px, transparent 50px);
+            background-repeat: repeat-y;
+            cursor: crosshair;
+            transition: background-color 0.2s;
         }
-        .weekly-header, .weekly-body {
-            width: fit-content;
-            min-width: 100%;
-        }
-        .event-title {
-            font-size: 11px;
-            font-weight: 700;
-            line-height: 1.2;
-            white-space: normal !important; /* 줄바꿈 허용 */
-            word-break: break-all;
-            display: block;
-            overflow: visible;
-            text-overflow: clip;
-            pointer-events: none;
-        }
-        /* 오늘 날짜 하이라이트 (회색) */
         .day-col.today {
-            background-color: #efefef !important; border-left: 2px solid #ccc; border-right: 2px solid #ccc;
+            background-color: #efefef !important; /* 오늘 날짜 회색 */
+            border-left: 2px solid #ccc !important;
+            border-right: 2px solid #ccc !important;
         }
-        /* 주말 색상 */
-        .day-header.sunday { color: #ff4d4f !important; font-weight: 800; }
-        .day-header.saturday { color: #1890ff !important; font-weight: 800; }
     
     </style>
 </head>
@@ -1524,7 +1526,7 @@
                 }
             });
 
-            if (scheduledTasks.length > 750) {
+            if (scheduledTasks.length > 0) {
                 events.push(...scheduledTasks);
                 saveEvents();
                 

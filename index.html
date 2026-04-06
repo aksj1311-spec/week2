@@ -868,6 +868,70 @@
             border-right: 2px solid #ccc !important;
         }
     
+
+        .lock-fab {
+            position: fixed;
+            bottom: 110px; /* 편집 버튼 위에 배치 */
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #ccc;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+            z-index: 9000;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-size: 11px;
+            font-weight: 700;
+            gap: 2px;
+        }
+        .lock-fab.active {
+            background: #333;
+            color: white;
+            border-color: #000;
+        }
+        @media (max-width: 768px) {
+            .lock-fab {
+                bottom: 100px;
+                right: 20px;
+                width: 70px;
+                height: 70px;
+            }
+            .edit-fab {
+                bottom: 20px; /* 모바일 하단 여백 유지 */
+            }
+        }
+        
+        /* 모달 내 시간 입력 스타일 */
+        .time-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .time-input-group input {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #e9e9e7;
+            border-radius: 6px;
+            text-align: center;
+        }
+    
+
+        .event-block.lock-mode-active .check-btn {
+            display: none !important;
+        }
+        .event-block.lock-mode-active .lock-btn {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+    
     </style>
 </head>
 <body>
@@ -922,6 +986,13 @@
                         <!-- 9:00 ~ 24:00 (15시간) -->
                     
     <!-- 편집 플로팅 버튼 -->
+    
+    <!-- 고정 모드 플로팅 버튼 -->
+    <button id="lockToggleBtn" class="lock-fab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <span>고정</span>
+    </button>
+    
     <button id="editToggleBtn" class="edit-fab">
         <svg id="editIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         <svg id="doneIcon" style="display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -975,6 +1046,18 @@
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-title">일정 수정</div>
+            
+            <div class="time-input-group">
+                <label>시작:</label>
+                <input type="number" id="startH" min="9" max="23">시
+                <input type="number" id="startM" min="0" max="59">분
+            </div>
+            <div class="time-input-group">
+                <label>종료:</label>
+                <input type="number" id="endH" min="9" max="24">시
+                <input type="number" id="endM" min="0" max="59">분
+            </div>
+    
             <input type="text" id="editTitle" placeholder="일정 제목">
             <div class="color-picker-wrap">
                 <label for="editColor">배경 색상:</label>
@@ -998,6 +1081,33 @@
         
 
         let isEditMode = false;
+
+        let isLockMode = false;
+        const lockBtn = document.getElementById('lockToggleBtn');
+        
+        function toggleLockMode() {
+            isLockMode = !isLockMode;
+            if (isLockMode) {
+                lockBtn.classList.add('active');
+                if (isEditMode) toggleEditMode(); // 편집 모드와 배타적 실행
+            } else {
+                lockBtn.classList.remove('active');
+            }
+            render();
+        }
+        lockBtn.addEventListener('click', toggleLockMode);
+
+        // 편집 모드 토글 시 고정 모드 해제
+        const originalToggleEditMode = toggleEditMode;
+        toggleEditMode = function() {
+            originalToggleEditMode();
+            if (isEditMode && isLockMode) {
+                isLockMode = false;
+                lockBtn.classList.remove('active');
+            }
+            render();
+        };
+    
         
         const editBtn = document.getElementById('editToggleBtn');
         const editIcon = document.getElementById('editIcon');
@@ -1207,7 +1317,7 @@
 
         // 아이콘 클릭 이벤트들
         function toggleComplete(id, targetDateStr, e) {
-            if (isEditMode) return; // 편집 모드일 땐 체크 금지
+            // 체크는 항상 가능 (아이콘 클릭 시)
             e.stopPropagation();
             const ev = events.find(e => e.id === id);
             if (!ev) return;
@@ -1220,7 +1330,7 @@
         }
 
         function toggleRoutine(id, e) {
-            if (isEditMode) return; // 편집 모드일 땐 잠금 금지
+            if (!isLockMode) return; // 고정 모드일 때만 작동
             e.stopPropagation();
             const ev = events.find(e => e.id === id);
             if (!ev) return;
@@ -1722,6 +1832,18 @@
             editingEventId = id;
             document.getElementById('editTitle').value = ev.title;
             document.getElementById('editColor').value = ev.color;
+            
+            // 시간 분리 표시
+            const startH = Math.floor(ev.startTime);
+            const startM = Math.round((ev.startTime - startH) * 60);
+            const endH = Math.floor(ev.endTime);
+            const endM = Math.round((ev.endTime - endH) * 60);
+            
+            document.getElementById('startH').value = startH;
+            document.getElementById('startM').value = startM;
+            document.getElementById('endH').value = endH;
+            document.getElementById('endM').value = endM;
+
             document.getElementById('editModal').classList.add('active');
             document.getElementById('editTitle').focus();
         }
@@ -1738,13 +1860,19 @@
                 const newTitle = document.getElementById('editTitle').value.trim();
                 const newTitleFinal = newTitle || '새 일정';
                 
-                const manualColor = document.getElementById('editColor').value;
-                if (ev.title !== newTitleFinal) {
-                     ev.title = newTitleFinal;
-                     ev.color = getThemeColorForTitle(newTitleFinal);
-                } else {
-                     ev.color = manualColor;
-                }
+                // 시간 입력값 읽기
+                const sh = parseInt(document.getElementById('startH').value) || 9;
+                const sm = parseInt(document.getElementById('startM').value) || 0;
+                const eh = parseInt(document.getElementById('endH').value) || 10;
+                const em = parseInt(document.getElementById('endM').value) || 0;
+                
+                const newStartTime = sh + (sm / 60);
+                const newEndTime = eh + (em / 60);
+
+                ev.title = newTitleFinal;
+                ev.startTime = Math.max(9, Math.min(24, newStartTime));
+                ev.endTime = Math.max(ev.startTime + 0.1, Math.min(24, newEndTime));
+                ev.color = document.getElementById('editColor').value;
             }
             saveEvents();
             closeEditModal();

@@ -265,7 +265,7 @@
 
         .weekly-header {
             display: grid;
-            grid-template-columns: 40px repeat(7, 150px);
+            grid-template-columns: 40px repeat(7, 85px);
             border-bottom: 1px solid #e9e9e7;
             background: #f7f7f5;
         }
@@ -283,7 +283,7 @@
 
         .weekly-body {
             display: grid;
-            grid-template-columns: 40px repeat(7, 150px);
+            grid-template-columns: 40px repeat(7, 85px);
             height: 750px; /* 15시간 * 50px (9:00 ~ 24:00) */
             position: relative;
         }
@@ -330,7 +330,7 @@
             left: 4px;
             right: 4px;
             border-radius: 12px;
-            padding: 8px;
+            padding: 4px;
             padding-bottom: 12px; /* 리사이즈 핸들 여유공간 */
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
             transition: transform 0.2s ease, filter 0.2s ease, background-color 0.2s;
@@ -353,13 +353,15 @@
         }
 
         .event-title {
-            font-size: 13px;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: normal !important; /* 줄바꿈 허용 */
+            word-break: break-all;
+            display: block;
+            overflow: visible;
+            text-overflow: clip;
             pointer-events: none;
-            padding-right: 20px; /* 버튼과 겹치지 않게 */
         }
 
         /* 크기 조절 핸들 */
@@ -479,7 +481,7 @@
         .month-day-cell {
             border-right: 1px solid #e9e9e7;
             border-bottom: 1px solid #e9e9e7;
-            padding: 8px;
+            padding: 4px;
             display: flex;
             flex-direction: column;
             background: #ffffff;
@@ -694,7 +696,7 @@
                 width: 100%;
             }
             .weekly-header, .weekly-body {
-                grid-template-columns: 40px repeat(7, 150px);
+                grid-template-columns: 40px repeat(7, 85px);
             }
             .weekly-header > div {
                 font-size: 11px;
@@ -706,8 +708,16 @@
                 right: 4px;
             }
             .event-title {
-                font-size: 11px;
-            }
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: normal !important; /* 줄바꿈 허용 */
+            word-break: break-all;
+            display: block;
+            overflow: visible;
+            text-overflow: clip;
+            pointer-events: none;
+        }
             .month-day-cell {
                 min-height: 80px;
                 padding: 4px;
@@ -806,12 +816,15 @@
             background-size: 100% 50px;
         }
         .event-title {
-            font-size: 12px;
-            white-space: normal; /* 글자 보이게 줄바꿈 허용 */
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: normal !important; /* 줄바꿈 허용 */
             word-break: break-all;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+            display: block;
+            overflow: visible;
+            text-overflow: clip;
+            pointer-events: none;
         }
         
         /* 오늘 날짜 하이라이트 */
@@ -835,12 +848,14 @@
             min-width: 100%;
         }
         .event-title {
-            font-size: 12px;
-            white-space: normal;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: normal !important; /* 줄바꿈 허용 */
             word-break: break-all;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+            display: block;
+            overflow: visible;
+            text-overflow: clip;
             pointer-events: none;
         }
         /* 오늘 날짜 하이라이트 (회색) */

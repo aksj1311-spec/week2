@@ -369,7 +369,8 @@
         .event-block .check-btn {
             position: absolute;
             bottom: 8px; /* 리사이즈 피해서 올림 */
-            left: 4px;
+            left: 50%;
+            transform: translateX(-50%);
             cursor: pointer;
             background: transparent;
             border: none;
@@ -387,14 +388,25 @@
         }
 
         .event-block button:hover {
-            transform: scale(1.1);
             opacity: 0.8;
         }
 
-        .event-block .lock-btn.active:hover,
-        .event-block .check-btn.active:hover {
+        .event-block .lock-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .event-block .check-btn:hover {
+            transform: translateX(-50%) scale(1.1);
+        }
+
+        .event-block .lock-btn.active:hover {
             opacity: 1;
             transform: scale(1.1);
+        }
+
+        .event-block .check-btn.active:hover {
+            opacity: 1;
+            transform: translateX(-50%) scale(1.1);
         }
 
         /* 임시 생성 중인 블록 */
@@ -1192,7 +1204,7 @@
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                         </button>
                         <button class="check-btn ${completed ? 'active' : ''}" title="완료" onclick="toggleComplete('${ev.id}', '${dateStr}', event)">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         </button>
                     `;
                     

@@ -2,995 +2,165 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TimeBlocks</title>
     <style>
-        /* 기본 스타일 리셋 및 Notion 스타일 적용 */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        /* 기본 스타일 리셋 */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            width: 100%;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             color: #37352f;
             background-color: #ffffff;
             line-height: 1.5;
+            width: 100%;
         }
 
-        /* 헤더 영역 (네비게이션 및 뷰 전환) */
+        /* 헤더 영역 */
         header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 40px;
-            border-bottom: 1px solid #e9e9e7;
-            background: #ffffff;
-            position: sticky;
-            top: 0;
-            z-index: 50;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 40px; border-bottom: 1px solid #e9e9e7;
+            background: #ffffff; position: sticky; top: 0; z-index: 50;
         }
-
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-title h1 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #37352f;
-            letter-spacing: -0.5px;
-        }
-
+        .header-title { display: flex; align-items: center; gap: 10px; }
+        .header-title h1 { font-size: 22px; font-weight: 700; color: #37352f; letter-spacing: -0.5px; }
         .cute-block {
-            width: 18px;
-            height: 18px;
-            background: #ffb3ba;1
-            border-radius: 4px;
+            width: 18px; height: 18px; background: #ffb3ba; border-radius: 4px;
             box-shadow: 2px 2px 0px #ffdfba, 4px 4px 0px #ffffba;
-            transform: rotate(-10deg);
-            transition: background 0.3s;
+            transform: rotate(-10deg); transition: background 0.3s;
         }
-
-        .theme-selector {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-right: 20px;
-            padding-right: 20px;
-            border-right: 1px solid #e9e9e7;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            
+        .header-right { display: flex; align-items: center; gap: 20px; }
+        .header-legend { display: flex; gap: 12px; font-size: 17px; font-weight: 700; color: #333; }
+        
+        .theme-selector { 
+            display: flex; align-items: center; gap: 6px; 
+            border-right: 1px solid #e9e9e7; padding-right: 20px; margin-right: 20px; 
         }
-
-        .theme-selector span {
-            font-size: 13px;
-            font-weight: 600;
-            color: #777;
-            margin-right: 4px;
-        }
-
+        .theme-selector span { font-size: 13px; font-weight: 600; color: #777; }
         .theme-btn {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            border: 1px solid rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            padding: 0;
+            width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1);
+            cursor: pointer; transition: transform 0.2s;
         }
+        .theme-btn.active { transform: scale(1.15); box-shadow: 0 0 0 2px #fff, 0 0 0 4px #007bff; }
 
-        .theme-btn:hover, .theme-btn.active {
-            transform: scale(1.15);
-            box-shadow: 0 0 0 2px #fff, 0 0 0 4px #007bff;
-        }
+        .nav-controls { display: flex; align-items: center; gap: 16px; }
+        .nav-controls button { background: none; border: none; cursor: pointer; font-size: 20px; padding: 4px 12px; border-radius: 6px; }
+        .nav-controls h2 { font-size: 18px; font-weight: 600; min-width: 140px; text-align: center; }
+        .view-controls select { padding: 8px 16px; font-size: 14px; border-radius: 6px; border: 1px solid #e9e9e7; background: #f7f7f5; cursor: pointer; font-weight: 500; }
 
-        .nav-controls {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .nav-controls button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 20px;
-            padding: 4px 12px;
-            border-radius: 6px;
-            color: #37352f;
-            transition: background 0.2s;
-        }
-
-        .nav-controls button:hover {
-            background: #f0f0f0;
-        }
-
-        .nav-controls h2 {
-            font-size: 18px;
-            font-weight: 600;
-            margin: 0;
-            min-width: 140px;
-            text-align: center;
-        }
-
+        /* 레이아웃 */
+        .app-container { display: flex; padding: 20px 40px; gap: 24px; align-items: flex-start; }
+        main { flex: 1; min-width: 0; }
         
-            .header-right {
-                flex-direction: row !important;
-                flex-wrap: wrap;
-                justify-content: center !important;
-                gap: 10px !important;
-            }
-            .theme-selector {
-                margin-right: 0;
-                padding-right: 0;
-                border-right: none;
-                gap: 4px;
-            }
-            .theme-selector span {
-                display: none;
-            }
-            .theme-btn {
-                width: 18px;
-                height: 18px;
-            }
-            .header-legend {
-                width: 100%;
-                justify-content: center;
-                font-size: 14px !important;
-            }
-    
-            .header-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
+        /* 캘린더 공통 */
+        .weekly-view, .monthly-view { border: 1px solid #e9e9e7; border-radius: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .weekly-header, .weekly-body { display: grid; grid-template-columns: 50px repeat(7, 1fr); width: 100%; min-width: fit-content; }
 
-        .view-controls select {
-            padding: 8px 16px;
-            font-size: 14px;
-            border-radius: 6px;
-            border: 1px solid #e9e9e7;
-            background: #f7f7f5;
-            cursor: pointer;
-            outline: none;
-            font-weight: 500;
-        }
-
-        /* ----- 메인 레이아웃 ----- */
-        .app-container {
-            display: flex;
-            padding: 20px 40px;
-            gap: 24px;
-            align-items: flex-start;
-        }
-
-        main {
-            flex: 1;
-            min-width: 0;
-        }
-
-        /* ----- 자동 채우기 사이드바 ----- */
-        .auto-schedule-panel {
-            width: 280px;
-            background: #f7f7f5;
-            border-radius: 12px;
-            border: 1px solid #e9e9e7;
-            padding: 24px 24px 100px 24px; /* 추천 받기 하단 여백 추가 */
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            position: sticky;
-            top: 105px; /* 헤더 높이 + 여백 */
-            flex-shrink: 0;
-        }
-
-        .auto-schedule-panel h3 {
-            font-size: 16px;
-            font-weight: 600;
-            color: #37352f;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .auto-schedule-panel label {
-            display: block;
-            font-size: 13px;
-            color: #777;
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-
-        .auto-schedule-panel input[type="date"],
-        .auto-schedule-panel textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #e9e9e7;
-            border-radius: 6px;
-            font-size: 14px;
-            outline: none;
-            font-family: inherit;
-            background: #ffffff;
-        }
-
-        .auto-schedule-panel textarea {
-            resize: vertical;
-        }
-
-        .auto-schedule-panel input[type="date"]:focus,
-        .auto-schedule-panel textarea:focus {
-            border-color: #007bff;
-        }
-
-        .auto-buttons {
-            display: flex;
-            gap: 8px;
-            flex-direction: column;
-        }
-
-        .auto-buttons button {
-            padding: 10px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: background 0.2s, transform 0.1s;
-            width: 100%;
-        }
-
-        .auto-buttons button:active {
-            transform: scale(0.98);
-        }
-
-        #autoGenerateBtn { background: #333; color: white; }
-        #autoGenerateBtn:hover { background: #000; }
-        #autoRegenerateBtn { background: #e9e9e7; color: #333; display: none; }
-        #autoRegenerateBtn:hover { background: #d0d0d0; }
-
-        /* ----- 주간 뷰 (Weekly View) ----- */
-        .weekly-view {
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #e9e9e7;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .weekly-header {
-            display: grid;
-            grid-template-columns: 45px repeat(7, 1fr);
-            border-bottom: 1px solid #e9e9e7;
-            background: #f7f7f5;
-        }
-
-        .weekly-header > div {
-            text-align: center;
-            padding: 12px 0;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .weekly-header .day-header {
-            border-left: 1px solid #e9e9e7;
-        }
-
-        .weekly-body {
-            display: grid;
-            grid-template-columns: 45px repeat(7, 1fr);
-            height: 750px; /* 15시간 * 50px (9:00 ~ 24:00) */
-            position: relative;
-        }
-
-        .time-col {
-            display: flex;
-            flex-direction: column;
-            background: #ffffff;
-        }
-
+        /* 주간 뷰 그리드 */
+        .weekly-header { background: #f7f7f5; border-bottom: 1px solid #e9e9e7; }
+        .weekly-header > div { text-align: center; padding: 12px 0; font-size: 14px; font-weight: 600; border-left: 1px solid #e9e9e7; }
+        .weekly-body { height: 750px; position: relative; }
+        .time-col { display: flex; flex-direction: column; background: #ffffff; }
         .time-slot {
-            height: 50px;
-            text-align: right;
-            padding-right: 6px;
-            display: flex;
-            align-items: flex-start;
-            justify-content: flex-end;
+            height: 50px; text-align: right; padding-right: 8px; 
+            border-top: 1px solid #eee; display: flex; align-items: flex-start; justify-content: flex-end;
             box-sizing: border-box;
-            border-top: 1px solid #eee;
         }
-        
-        .time-slot span {
-            display: block;
-            line-height: 1;
-            font-size: 11px;
-            color: #999;
-            margin-top: -6px;
-        }
-
+        .time-slot span { font-size: 11px; color: #999; line-height: 1; margin-top: -6px; }
         .day-col {
-            border-left: 1px solid #e9e9e7;
-            position: relative;
-            height: 100%;
+            border-left: 1px solid #e9e9e7; position: relative; height: 100%;
             background-image: repeating-linear-gradient(to bottom, #eee, #eee 1px, transparent 1px, transparent 50px);
-            cursor: crosshair;
+            background-repeat: repeat-y; transition: background-color 0.2s;
             box-sizing: border-box;
         }
-        
-        
-        .day-col.drag-over {
-            background-color: rgba(0, 123, 255, 0.05);
-        }
+        .day-col.today { background-color: #efefef !important; border-left: 2px solid #ccc; border-right: 2px solid #ccc; }
+        .day-col.drag-over { background-color: rgba(0, 123, 255, 0.05); }
 
-        /* 일정 블록 (주간) */
+        /* 일정 블록 */
         .event-block {
-            position: absolute;
-            left: 2px;
-            right: 2px;
-            border-radius: 8px;
-            padding: 3px;
-            padding-bottom: 12px; /* 리사이즈 핸들 여유공간 */
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-            transition: transform 0.2s ease, filter 0.2s ease, background-color 0.2s;
-            cursor: pointer;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            user-select: none;
+            position: absolute; left: 2px; right: 2px; border-radius: 8px; padding: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: transform 0.2s;
+            cursor: pointer; overflow: hidden; display: flex; flex-direction: column;
         }
-
-        .event-block:hover {
-            transform: scale(1.02);
-            z-index: 10 !important;
-        }
-
-        /* 완료 상태 스타일 */
-        .event-block.completed {
-            filter: grayscale(0.8) brightness(0.9);
-            color: #555;
-        }
-
+        .event-block.locked { border: 3px solid #333; }
+        .event-block.completed { filter: grayscale(0.8) brightness(0.9); opacity: 0.8; }
         .event-title {
-            font-size: 11px;
-            font-weight: 700;
-            line-height: 1.2;
-            white-space: normal !important; /* 줄바꿈 허용 */
-            word-break: break-all;
-            display: block;
-            overflow: visible;
-            text-overflow: clip;
+            font-size: 11px; font-weight: 700; line-height: 1.2;
+            white-space: normal; word-break: break-all;
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
             pointer-events: none;
         }
-
-        /* 크기 조절 핸들 */
-        .resize-handle {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 8px;
-            cursor: ns-resize;
-            z-index: 10;
-        }
-        .resize-handle:hover {
-            background-color: rgba(0, 0, 0, 0.1);
-        }
-
-        /* 내부 버튼 스타일 */
-        .event-block .lock-btn {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            cursor: pointer;
-            background: transparent;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0.4;
-            transition: opacity 0.2s, transform 0.2s;
-            padding: 4px;
-            color: inherit;
-        }
-
-        .event-block .lock-btn.active {
-            opacity: 1;
-        }
-
-        .event-block .check-btn {
-            position: absolute;
-            bottom: 8px; /* 리사이즈 피해서 올림 */
-            left: 50%;
-            transform: translateX(-50%);
-            cursor: pointer;
-            background: transparent;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0.4;
-            transition: opacity 0.2s, transform 0.2s;
-            padding: 4px;
-            color: inherit;
-        }
-
-        .event-block .check-btn.active {
-            opacity: 1;
-        }
-
-        .event-block button:hover {
-            opacity: 0.8;
-        }
-
-        .event-block .lock-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .event-block .check-btn:hover {
-            transform: translateX(-50%) scale(1.1);
-        }
-
-        .event-block .lock-btn.active:hover {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-
-        .event-block .check-btn.active:hover {
-            opacity: 1;
-            transform: translateX(-50%) scale(1.1);
-        }
-
-        /* 임시 생성 중인 블록 */
-        .event-block.temp-event {
-            opacity: 0.7;
-            pointer-events: none;
-            box-shadow: none;
-        }
-
-        /* ----- 월간 뷰 (Monthly View) ----- */
-        .monthly-view {
-            display: none; /* 기본은 숨김 */
-            flex-direction: column;
-            border: 1px solid #e9e9e7;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .monthly-header {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            background: #f7f7f5;
-            border-bottom: 1px solid #e9e9e7;
-        }
-
-        .monthly-header > div {
-            text-align: center;
-            padding: 12px 0;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .monthly-body {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            grid-auto-rows: minmax(120px, auto);
-        }
-
-        .month-day-cell {
-            border-right: 1px solid #e9e9e7;
-            border-bottom: 1px solid #e9e9e7;
-            padding: 4px;
-            display: flex;
-            flex-direction: column;
-            background: #ffffff;
-            transition: background-color 0.2s;
-            background-repeat: repeat;
-        }
-
-        .month-day-cell:nth-child(7n) {
-            border-right: none;
-        }
+        .resize-handle { position: absolute; bottom: 0; left: 0; right: 0; height: 10px; cursor: ns-resize; z-index: 10; }
         
-        .month-day-cell.drag-over {
-            background-color: rgba(0, 123, 255, 0.05);
+        .lock-btn, .check-btn {
+            position: absolute; background: none; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; opacity: 0.4; transition: opacity 0.2s;
         }
+        .lock-btn { top: 4px; right: 4px; }
+        .check-btn { bottom: 8px; left: 50%; transform: translateX(-50%); }
+        .lock-btn.active, .check-btn.active { opacity: 1; }
+        
+        /* 모드별 버튼 제어 */
+        .event-block.edit-active .lock-btn, .event-block.edit-active .check-btn { display: none !important; }
+        .event-block.lock-mode-active .check-btn { display: none !important; }
+        .event-block.lock-mode-active .lock-btn { opacity: 1; transform: scale(1.2); }
 
-        .month-date {
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #777;
-            pointer-events: none;
+        /* 월간 뷰 */
+        .monthly-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f7f7f5; border-bottom: 1px solid #e9e9e7; }
+        .monthly-header > div { text-align: center; padding: 12px 0; font-size: 14px; font-weight: 500; }
+        .monthly-body { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: minmax(120px, auto); }
+        .month-day-cell { border-right: 1px solid #e9e9e7; border-bottom: 1px solid #e9e9e7; padding: 4px; min-height: 100px; }
+        .month-date { font-size: 13px; color: #777; margin-bottom: 4px; }
+        .month-event { font-size: 11px; padding: 2px 4px; margin-bottom: 2px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+
+        /* 사이드바 & 모달 */
+        .auto-schedule-panel {
+            width: 280px; background: #f7f7f5; border-radius: 12px; border: 1px solid #e9e9e7;
+            padding: 24px 24px 120px 24px; position: sticky; top: 105px; flex-shrink: 0;
         }
-
-        /* 일정 텍스트 (월간) */
-        .month-event {
-            font-size: 12px;
-            padding: 4px 6px;
-            margin-bottom: 4px;
-            border-radius: 4px;
-            cursor: pointer;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
-            border: 1px solid transparent;
-        }
-
-        .month-event:hover {
-            filter: brightness(0.95);
-        }
-
-        .month-event.completed {
-            filter: grayscale(0.8) brightness(0.9);
-            text-decoration: line-through;
-            color: #666;
-        }
-
-        .month-event::before {
-            content: '';
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: var(--event-color);
-            flex-shrink: 0;
-        }
-
-        /* ----- 모달 (일정 수정) ----- */
         .modal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4);
-            display: none; /* 숨김 */
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            backdrop-filter: blur(2px);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center;
+            z-index: 9999; backdrop-filter: blur(2px);
         }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 24px; border-radius: 12px; width: 320px; display: flex; flex-direction: column; gap: 16px; }
+        .time-input-group { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+        .time-input-group input { width: 60px; padding: 8px; border: 1px solid #e9e9e7; border-radius: 6px; text-align: center; }
 
-        .modal.active {
-            display: flex;
+        /* 플로팅 버튼 (FAB) */
+        .edit-fab, .lock-fab {
+            position: fixed; right: 30px; width: 65px; height: 65px; border-radius: 50%;
+            border: none; box-shadow: 0 6px 16px rgba(0,0,0,0.2); z-index: 9000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 11px; font-weight: 700; transition: all 0.3s;
         }
+        .edit-fab { bottom: 30px; background: #007bff; color: white; }
+        .edit-fab.active { background: #ff4d4d; }
+        .lock-fab { bottom: 110px; background: #f0f0f0; color: #333; border: 2px solid #ccc; }
+        .lock-fab.active { background: #333; color: white; border-color: #000; }
 
-        .modal-content {
-            background: white;
-            padding: 24px 24px 100px 24px; /* 추천 받기 하단 여백 추가 */
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            width: 320px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .modal-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .modal-content input[type="text"] {
-            padding: 10px;
-            border: 1px solid #e9e9e7;
-            border-radius: 6px;
-            font-size: 15px;
-            outline: none;
-        }
-
-        .modal-content input[type="text"]:focus {
-            border-color: #007bff;
-        }
-
-        .color-picker-wrap {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .color-picker-wrap input[type="color"] {
-            width: 40px;
-            height: 40px;
-            padding: 0;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            background: none;
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .modal-actions button {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        #saveBtn { background: #333; color: white; }
-        #saveBtn:hover { background: #000; }
-        #deleteBtn { background: #ffebee; color: #c62828; }
-        #deleteBtn:hover { background: #ffcdd2; }
-        #copyBtn { background: #e3f2fd; color: #0056b3; }
-        #copyBtn:hover { background: #cce5ff; }
-        #cancelBtn { background: #f0f0f0; color: #333; }
-        #cancelBtn:hover { background: #e0e0e0; }
-
-        /* ----- 모바일 반응형 스타일 ----- */
-        @media (max-width: 768px) {
-            .weekly-header, .weekly-body {
-                grid-template-columns: 40px repeat(7, 85px) !important;
-                width: fit-content;
-                min-width: 100%;
-            }
-            .weekly-view, .monthly-view {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            header { padding: 15px; flex-direction: column; gap: 10px; }
-            .header-right { width: 100%; justify-content: center; flex-wrap: wrap; gap: 10px; }
-            .header-legend { width: 100%; justify-content: center; font-size: 14px !important; margin-right: 0 !important; }
-            .app-container { flex-direction: column; padding: 10px 10px 120px 10px; height: calc(100% - 120px); overflow-y: auto; }
-            body.edit-mode-locked { overflow: hidden; position: fixed; width: 100%; }
-        }
-            .weekly-view, .monthly-view {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            header {
-                padding: 15px 20px;
-                flex-direction: column;
-                gap: 15px;
-                position: static;
-            }
-            .header-title {
-                flex-direction: column;
-                align-items: center;
-                gap: 8px;
-            }
-            .nav-controls {
-                gap: 8px;
-            }
-            .nav-controls h2 {
-                min-width: 100px;
-                font-size: 16px;
-            }
-            .header-right {
-                width: 100%;
-                display: flex;
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 10px;
-            }
-            .theme-selector {
-                border-right: none;
-                padding-right: 0;
-                margin-right: 0;
-                gap: 4px;
-                order: 1;
-            }
-            .theme-selector span {
-                display: none;
-            }
-            .theme-btn {
-                width: 18px;
-                height: 18px;
-            }
-            .header-legend {
-                width: 100%;
-                justify-content: center;
-                font-size: 14px !important;
-                margin-right: 0 !important;
-                gap: 8px !important;
-                order: 3;
-            }
-            .view-controls {
-                width: auto;
-                order: 2;
-            }
-            .app-container {
-                flex-direction: column;
-                padding: 15px 15px 120px 15px;
-                gap: 15px;
-            }
-            .auto-schedule-panel {
-                width: 100%;
-                position: static;
-                order: 2; 
-            }
-            main {
-                order: 1;
-                width: 100%;
-            }
-            .weekly-header, .weekly-body {
-                grid-template-columns: 45px repeat(7, 1fr);
-            }
-            .weekly-header > div {
-                font-size: 11px;
-                padding: 8px 0;
-            }
-            .time-slot span {
-            display: block; /* 시 표시 */
-                font-size: 10px;
-                right: 4px;
-            }
-            .event-title {
-            font-size: 11px;
-            font-weight: 700;
-            line-height: 1.2;
-            white-space: normal !important; /* 줄바꿈 허용 */
-            word-break: break-all;
-            display: block;
-            overflow: visible;
-            text-overflow: clip;
-            pointer-events: none;
-        }
-            .month-day-cell {
-                min-height: 80px;
-                padding: 4px;
-            }
-            .month-date {
-                font-size: 12px;
-            }
-            .month-event {
-                font-size: 10px;
-                padding: 2px 4px;
-            }
-        }
-
-        /* ----- 편집 모드 스타일 ----- */
-        .edit-fab {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            background: #007bff;
-            color: white;
-            border: none;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-            z-index: 9000;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-size: 11px;
-            font-weight: 700;
-            gap: 2px;
-        }
-        .edit-fab.active {
-            background: #ff4d4d;
-            transform: scale(1.1);
-        }
-        .edit-fab svg {
-            width: 24px;
-            height: 24px;
-        }
-
-        /* ----- 모바일 화면 고정 ----- */
-        @media (max-width: 768px) {
-            .weekly-header, .weekly-body {
-                grid-template-columns: 40px repeat(7, 85px) !important;
-                width: fit-content;
-                min-width: 100%;
-            }
-            .weekly-view, .monthly-view {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            header { padding: 15px; flex-direction: column; gap: 10px; }
-            .header-right { width: 100%; justify-content: center; flex-wrap: wrap; gap: 10px; }
-            .header-legend { width: 100%; justify-content: center; font-size: 14px !important; margin-right: 0 !important; }
-            .app-container { flex-direction: column; padding: 10px 10px 120px 10px; height: calc(100% - 120px); overflow-y: auto; }
-            body.edit-mode-locked { overflow: hidden; position: fixed; width: 100%; }
-        }
-            .app-container {
-                height: calc(100% - 100px); /* 헤더 추정 높이 */
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            .edit-fab {
-                bottom: 20px;
-                right: 20px;
-                width: 70px;
-                height: 50px;
-            }
-        }
-    
-
-        .event-block.locked {
-            border: 3px solid #333;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-    
-
-        .event-block.edit-active .lock-btn,
-        .event-block.edit-active .check-btn {
-            display: none !important;
-        }
-    
-
-        .weekly-view, .monthly-view {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .weekly-header, .weekly-body {
-            width: fit-content;
-            min-width: 100%;
-        }
-        /* 가로로 넓게, 세로는 더 콤팩트하게 (기존 70px에서 50px로 시도) */
-        .weekly-body {
-            height: 750px; /* 15시간 * 50px */
-        }
-        .time-slot, .day-col {
-            border-left: 1px solid #e9e9e7;
-            position: relative;
-            height: 100%;
-            background-image: repeating-linear-gradient(to bottom, #eee, #eee 1px, transparent 1px, transparent 50px);
-            cursor: crosshair;
-            box-sizing: border-box;
-        }
-        
-        .day-col {
-            border-left: 1px solid #e9e9e7;
-            position: relative;
-            height: 100%;
-            background-image: repeating-linear-gradient(to bottom, #eee, #eee 1px, transparent 1px, transparent 50px);
-            cursor: crosshair;
-            box-sizing: border-box;
-        }
-        
-        .event-title {
-            font-size: 11px;
-            font-weight: 700;
-            line-height: 1.2;
-            white-space: normal !important; /* 줄바꿈 허용 */
-            word-break: break-all;
-            display: block;
-            overflow: visible;
-            text-overflow: clip;
-            pointer-events: none;
-        }
-        
-        
         /* 주말 색상 */
-        .day-header.sunday { color: #ff4d4f !important; font-weight: 800; }
-        .day-header.saturday { color: #1890ff !important; font-weight: 800; }
-    
+        .day-header.sunday { color: #ff4d4f; }
+        .day-header.saturday { color: #1890ff; }
 
-        
-    
-
-        .day-col {
-            border-left: 1px solid #e9e9e7;
-            position: relative;
-            height: 100%;
-            background-image: repeating-linear-gradient(to bottom, #eee, #eee 1px, transparent 1px, transparent 50px);
-            cursor: crosshair;
-            box-sizing: border-box;
-        }
-        .day-col.today {
-            background-color: #efefef !important; /* 오늘 날짜 회색 */
-            border-left: 2px solid #ccc !important;
-            border-right: 2px solid #ccc !important;
-        }
-    
-
-        .lock-fab {
-            position: fixed;
-            bottom: 110px; /* 편집 버튼 위에 배치 */
-            right: 30px;
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            background: #f0f0f0;
-            color: #333;
-            border: 2px solid #ccc;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-            z-index: 9000;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            font-size: 11px;
-            font-weight: 700;
-            gap: 2px;
-        }
-        .lock-fab.active {
-            background: #333;
-            color: white;
-            border-color: #000;
-        }
+        /* 반응형 모바일 */
         @media (max-width: 768px) {
-            .weekly-header, .weekly-body {
-                grid-template-columns: 40px repeat(7, 85px) !important;
-                width: fit-content;
-                min-width: 100%;
-            }
-            .weekly-view, .monthly-view {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            header { padding: 15px; flex-direction: column; gap: 10px; }
+            header { padding: 15px; flex-direction: column; gap: 10px; position: static; }
             .header-right { width: 100%; justify-content: center; flex-wrap: wrap; gap: 10px; }
-            .header-legend { width: 100%; justify-content: center; font-size: 14px !important; margin-right: 0 !important; }
-            .app-container { flex-direction: column; padding: 10px 10px 120px 10px; height: calc(100% - 120px); overflow-y: auto; }
+            .header-legend { width: 100%; justify-content: center; font-size: 14px !important; }
+            .theme-selector { border-right: none; padding-right: 0; margin-right: 0; }
+            .theme-selector span { display: none; }
+            .theme-btn { width: 18px; height: 18px; }
+            .app-container { flex-direction: column; padding: 10px 10px 120px 10px; height: calc(100vh - 140px); overflow-y: auto; }
+            .weekly-header, .weekly-body { grid-template-columns: 40px repeat(7, 85px) !important; }
+            .edit-fab, .lock-fab { right: 20px; width: 70px; height: 70px; }
+            .edit-fab { bottom: 20px; }
+            .lock-fab { bottom: 100px; }
             body.edit-mode-locked { overflow: hidden; position: fixed; width: 100%; }
         }
-            .edit-fab {
-                bottom: 20px; /* 모바일 하단 여백 유지 */
-            }
-        }
-        
-        /* 모달 내 시간 입력 스타일 */
-        .time-input-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-        .time-input-group input {
-            width: 60px;
-            padding: 8px;
-            border: 1px solid #e9e9e7;
-            border-radius: 6px;
-            text-align: center;
-        }
-    
-
-        .event-block.lock-mode-active .check-btn {
-            display: none !important;
-        }
-        .event-block.lock-mode-active .lock-btn {
-            opacity: 1;
-            transform: scale(1.2);
-        }
-    
-
-        /* 편집 모드 시 스크롤 방지 */
-        body.edit-mode-locked {
-            overflow: hidden !important;
-            touch-action: none;
-            position: fixed;
-            width: 100%;
-            height: 100%;
-        }
-        
-        /* 편집 모드 시 캘린더 내부만 드래그 가능하게 설정 */
-        .edit-active .day-col {
-            border-left: 1px solid #e9e9e7;
-            position: relative;
-            height: 100%;
-            background-image: repeating-linear-gradient(to bottom, #eee, #eee 1px, transparent 1px, transparent 50px);
-            cursor: crosshair;
-            box-sizing: border-box;
-        }
-    
     </style>
 </head>
-<body>
+<body class="">
 
     <header>
         <div class="header-title">
@@ -1003,19 +173,17 @@
             <button id="nextBtn">&gt;</button>
         </div>
         <div class="header-right">
-            <div class="header-legend" style="display: flex; gap: 12px; font-size: 17px; font-weight: 700; color: #333; margin-right: 20px;">
+            <div class="header-legend">
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    스케줄 고정(반복되는 루틴 추천 🔄)
+                    스케줄 고정(🔄)
                 </div>
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    할 일 완료/미완료
+                    완료/미완료
                 </div>
             </div>
-            <!-- 테마 선택 영역 -->
             <div class="theme-selector">
-                <span>테마 추천:</span>
                 <button class="theme-btn active" title="핑크" data-theme="pink" style="background: #FFD9EC"></button>
                 <button class="theme-btn" title="파란" data-theme="blue" style="background: #B2EBF4"></button>
                 <button class="theme-btn" title="보라" data-theme="purple" style="background: #DAD9FF"></button>
@@ -1033,77 +201,62 @@
 
     <div class="app-container">
         <main>
-            <!-- 주간 뷰 -->
             <div id="weeklyView" class="weekly-view">
-                <div class="weekly-header" id="weeklyHeader">
-                    <!-- JS로 렌더링 -->
-                </div>
+                <div class="weekly-header" id="weeklyHeader"></div>
                 <div class="weekly-body" id="weeklyBody">
-                    <div class="time-col">
-                        <!-- 9:00 ~ 24:00 (15시간) -->
-                    
-    <!-- 편집 플로팅 버튼 -->
-    
-    <!-- 고정 모드 플로팅 버튼 -->
-    <button id="lockToggleBtn" class="lock-fab">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        <span>고정</span>
-    </button>
-    
-    <button id="editToggleBtn" class="edit-fab">
-        <svg id="editIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-        <svg id="doneIcon" style="display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        <span id="editLabel">편집</span>
-    </button>
-    
-    <script>
+                    <div class="time-col" id="time-col">
+                        <script>
                             for(let i = 9; i <= 24; i++) {
                                 document.write(`<div class="time-slot"><span>${i}</span></div>`);
                             }
                         </script>
                     </div>
-                    <!-- day-col 들은 JS로 렌더링 -->
                 </div>
             </div>
-
-            <!-- 월간 뷰 -->
             <div id="monthlyView" class="monthly-view">
                 <div class="monthly-header">
-                    <div>일</div><div>월</div><div>화</div><div>수</div>
-                    <div>목</div><div>금</div><div>토</div>
+                    <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
                 </div>
-                <div class="monthly-body" id="monthlyBody">
-                    <!-- JS로 렌더링 -->
-                </div>
+                <div class="monthly-body" id="monthlyBody"></div>
             </div>
         </main>
         
         <aside class="auto-schedule-panel">
             <h3 style="display: flex; align-items: center; gap: 8px;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #007bff;"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><path d="M12 20a2 2 0 0 1 2-2v-2a2 2 0 0 1-2-2 2 2 0 0 1-2 2v2a2 2 0 0 1 2 2z"></path><path d="M20 12a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2 2 2 0 0 1 2-2h2a2 2 0 0 1 2 2z"></path><path d="M4 12a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path><rect x="9" y="9" width="6" height="6" rx="1"></rect></svg>
-                하루 일정 자동 채우기(AI 스케줄러)
+                AI 스케줄러
             </h3>
-            <div>
-                <label for="autoDate">날짜 선택</label>
-                <input type="date" id="autoDate">
+            <div style="margin-top:15px;">
+                <label style="display:block; font-size:12px; color:#777; margin-bottom:5px;">날짜 선택</label>
+                <input type="date" id="autoDate" style="width:100%; padding:10px; border:1px solid #e9e9e7; border-radius:6px;">
             </div>
-            <div>
-                <label for="autoTasks">할 일 목록 (줄바꿈으로 구분)</label>
-                <textarea id="autoTasks" rows="5" placeholder="밥먹기&#10;과제하기&#10;운동&#10;공부"></textarea>
-                <p style="font-size: 11px; color: #777; margin-top: 6px;">할 일을 작성하면 ai가 일정을 추천해줘요!</p>
+            <div style="margin-top:15px;">
+                <label style="display:block; font-size:12px; color:#777; margin-bottom:5px;">할 일 목록 (줄바꿈 구분)</label>
+                <textarea id="autoTasks" rows="5" placeholder="공부하기&#10;운동하기" style="width:100%; padding:10px; border:1px solid #e9e9e7; border-radius:6px; resize:none;"></textarea>
+                <p style="font-size: 11px; color: #777; margin-top: 6px;">AI가 식사 시간과 휴식을 포함해 스케줄을 짜드려요!</p>
             </div>
-            <div class="auto-buttons">
-                <button id="autoGenerateBtn">추천 받기</button>
-                <button id="autoRegenerateBtn">다시 추천</button>
+            <div style="margin-top:15px; display:flex; flex-direction:column; gap:8px;">
+                <button id="autoGenerateBtn" style="padding:12px; background:#333; color:white; border:none; border-radius:6px; font-weight:700; cursor:pointer;">추천 받기</button>
+                <button id="autoRegenerateBtn" style="padding:12px; background:#eee; color:#333; border:none; border-radius:6px; font-weight:700; cursor:pointer; display:none;">다시 추천</button>
             </div>
         </aside>
     </div>
 
+    <!-- 플로팅 버튼 -->
+    <button id="lockToggleBtn" class="lock-fab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <span>고정</span>
+    </button>
+    <button id="editToggleBtn" class="edit-fab">
+        <svg id="editIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        <svg id="doneIcon" style="display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span id="editLabel">편집</span>
+    </button>
+
     <!-- 모달 -->
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <div class="modal-title">일정 수정</div>
-            
+            <div class="modal-title" style="font-weight:700; font-size:18px;">일정 수정</div>
             <div class="time-input-group">
                 <label>시작:</label>
                 <input type="number" id="startH" min="9" max="23">시
@@ -1114,957 +267,303 @@
                 <input type="number" id="endH" min="9" max="24">시
                 <input type="number" id="endM" min="0" max="59">분
             </div>
-    
-            <input type="text" id="editTitle" placeholder="일정 제목">
-            <div class="color-picker-wrap">
-                <label for="editColor">배경 색상:</label>
-                <input type="color" id="editColor">
+            <input type="text" id="editTitle" placeholder="일정 제목" style="padding:10px; border:1px solid #e9e9e7; border-radius:6px;">
+            <div class="color-picker-wrap" style="display:flex; align-items:center; gap:10px;">
+                <label style="font-size:14px;">색상:</label>
+                <input type="color" id="editColor" style="width:40px; height:40px; border:none; background:none; cursor:pointer;">
             </div>
-            <div class="modal-actions">
-                <button id="deleteBtn">삭제</button>
-                <button id="copyBtn">복사</button>
-                <button id="cancelBtn">취소</button>
-                <button id="saveBtn">저장</button>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
+                <button id="deleteBtn" style="padding:10px 15px; background:#ffebee; color:#c62828; border:none; border-radius:6px; font-weight:600; cursor:pointer;">삭제</button>
+                <button id="cancelBtn" style="padding:10px 15px; background:#eee; border:none; border-radius:6px; font-weight:600; cursor:pointer;">취소</button>
+                <button id="saveBtn" style="padding:10px 15px; background:#333; color:white; border:none; border-radius:6px; font-weight:600; cursor:pointer;">저장</button>
             </div>
         </div>
     </div>
 
     <script>
-        /**
-         * ----------------------------------
-         * 데이터 및 상태 관리 (LocalStorage 연동)
-         * ----------------------------------
-         */
-        
+        /** 데이터 관리 **/
+        let currentDate = new Date();
+        let currentView = 'weekly';
+        let events = JSON.parse(localStorage.getItem('timeblocks_events')) || [];
+        function saveEvents() { localStorage.setItem('timeblocks_events', JSON.stringify(events)); }
 
+        /** 모드 관리 **/
         let isEditMode = false;
-
         let isLockMode = false;
-        const lockBtn = document.getElementById('lockToggleBtn');
-        
-        function toggleLockMode() {
-            isLockMode = !isLockMode;
-            if (isLockMode) {
-                lockBtn.classList.add('active');
-                if (isEditMode) toggleEditMode(); // 편집 모드와 배타적 실행
-            } else {
-                lockBtn.classList.remove('active');
-            }
-            render();
-        }
-        lockBtn.addEventListener('click', toggleLockMode);
-
-        // 편집 모드 토글 시 고정 모드 해제
-        const originalToggleEditMode = toggleEditMode;
-        toggleEditMode = function() {
-            originalToggleEditMode();
-            if (isEditMode && isLockMode) {
-                isLockMode = false;
-                lockBtn.classList.remove('active');
-            }
-            render();
-        };
-    
-        
         const editBtn = document.getElementById('editToggleBtn');
-        const editIcon = document.getElementById('editIcon');
-        const doneIcon = document.getElementById('doneIcon');
-        const editLabel = document.getElementById('editLabel');
+        const lockBtn = document.getElementById('lockToggleBtn');
 
         function toggleEditMode() {
             isEditMode = !isEditMode;
             document.body.classList.toggle('edit-mode-locked', isEditMode);
             if (isEditMode) {
                 editBtn.classList.add('active');
-                editIcon.style.display = 'none';
-                doneIcon.style.display = 'block';
-                editLabel.textContent = '완료';
+                document.getElementById('editIcon').style.display = 'none';
+                document.getElementById('doneIcon').style.display = 'block';
+                document.getElementById('editLabel').textContent = '완료';
+                if (isLockMode) toggleLockMode();
             } else {
                 editBtn.classList.remove('active');
-                editIcon.style.display = 'block';
-                doneIcon.style.display = 'none';
-                editLabel.textContent = '편집';
+                document.getElementById('editIcon').style.display = 'block';
+                document.getElementById('doneIcon').style.display = 'none';
+                document.getElementById('editLabel').textContent = '편집';
             }
-            render(); // 버튼 상태 변경 시 렌더링을 다시 해서 드래그 등의 효과 갱신 가능 (필요 시)
+            render();
         }
-
+        function toggleLockMode() {
+            isLockMode = !isLockMode;
+            lockBtn.classList.toggle('active', isLockMode);
+            if (isLockMode && isEditMode) toggleEditMode();
+            render();
+        }
         editBtn.addEventListener('click', toggleEditMode);
-    
-        let currentDate = new Date(); // 기본값: 오늘
-        let currentView = 'weekly'; // 'weekly' | 'monthly' 
+        lockBtn.addEventListener('click', toggleLockMode);
 
-        // LocalStorage에서 데이터 불러오기
-        let events = JSON.parse(localStorage.getItem('timeblocks_events')) || [];
-
-        function saveEvents() {
-            localStorage.setItem('timeblocks_events', JSON.stringify(events));
-        }
-
-        /**
-         * ----------------------------------
-         * 색상 테마 로직
-         * ----------------------------------
-         */
-        
-                const palettes = {
+        /** 테마 및 색상 **/
+        const palettes = {
             pink:    ['#FFD9EC', '#FFC1E3', '#FFB2D9', '#FFD1DC', '#FFE4F2'],
             blue:    ['#B2EBF4', '#D1F2FF', '#AEE4FF', '#B2D8FF', '#E0F7FA'],
             purple:  ['#DAD9FF', '#E2E2FF', '#C7C7FF', '#B8B8FF', '#F0F0FF'],
             green:   ['#CEFBC9', '#E4FFD9', '#B2F5B2', '#D9FFDF', '#F1FFE8'],
             rainbow: ['#FFD9EC', '#B2EBF4', '#DAD9FF', '#CEFBC9', '#FFF9C4']
         };
-
         let currentTheme = localStorage.getItem('timeblocks_theme') || 'pink';
-
-        // 큐트 블록 색상 업데이트
-        function updateCuteBlockColor() {
-            const block = document.getElementById('cuteBlock');
-            const colors = palettes[currentTheme];
-            block.style.background = colors[0];
-            block.style.boxShadow = `2px 2px 0px ${colors[1]}, 4px 4px 0px ${colors[2]}`;
-            
-            // 버튼 활성화 상태 업데이트
-            document.querySelectorAll('.theme-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if(btn.dataset.theme === currentTheme) {
-                    btn.classList.add('active');
-                }
-            });
-        }
-        updateCuteBlockColor();
-
-        // 색상 변환 유틸리티 (HEX -> HSL)
-        function hexToHsl(hex) {
-            hex = hex.replace(/^#/, '');
-            if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-            let r = parseInt(hex.substring(0, 2), 16) / 50;
-            let g = parseInt(hex.substring(2, 4), 16) / 50;
-            let b = parseInt(hex.substring(4, 6), 16) / 50;
-
-            let max = Math.max(r, g, b), min = Math.min(r, g, b);
-            let h, s, l = (max + min) / 50;
-
-            if (max == min) {
-                h = s = 0;
-            } else {
-                let d = max - min;
-                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                switch (max) {
-                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                    case g: h = (b - r) / d + 2; break;
-                    case b: h = (r - g) / d + 4; break;
-                }
-                h /= 6;
-            }
-            return [h * 360, s * 100, l * 100];
-        }
-
-        // HSL -> HEX
-        function hslToHex(h, s, l) {
-            l /= 100;
-            const a = s * Math.min(l, 1 - l) / 50;
-            const f = n => {
-                const k = (n + h / 30) % 12;
-                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-                return Math.round(255 * color).toString(16).padStart(2, '0');
-            };
-            return `#${f(0)}${f(8)}${f(4)}`;
-        }
-
         let titleColorMap = {};
-        let colorCounter = 0;
-
         function getThemeColorForTitle(title) {
             if (!title) title = '새 일정';
             if (titleColorMap[title]) return titleColorMap[title];
-
-            const colors = palettes[currentTheme] || palettes['pastel'];
-            
-            // 테마 베이스 색상 가져오기
-            const baseColorIndex = colorCounter % colors.length;
-            const baseColorHex = colors[baseColorIndex];
-            
-            // 색상을 순환하면서 명도를 조금씩 변경하여 비슷한 계열의 새로운 색상 생성
-            const cycle = Math.floor(colorCounter / colors.length);
-            const [h, s, l] = hexToHsl(baseColorHex);
-            
-            // cycle이 늘어날수록 명도를 조절 (밝아지거나 어두워짐, 제한)
-            let newL = l + (cycle % 2 === 0 ? cycle * 4 : -cycle * 4);
-            newL = Math.max(40, Math.min(95, newL)); 
-            
-            // Hue도 살짝 변형 (cycle당 5도씩 회전)
-            let newH = (h + cycle * 5) % 360;
-
-            const newHex = hslToHex(newH, s, newL);
-            
-            colorCounter++;
-            titleColorMap[title] = newHex;
-            return newHex;
+            const colors = palettes[currentTheme] || palettes['pink'];
+            const color = colors[Object.keys(titleColorMap).length % colors.length];
+            titleColorMap[title] = color;
+            return color;
         }
-
-        function resetColorMap() {
-            titleColorMap = {};
-            colorCounter = 0;
-        }
-
-        // 초기 로드 시 기존 일정들의 색상을 매핑에 등록
-        events.forEach(ev => {
-            if (!titleColorMap[ev.title]) {
-                titleColorMap[ev.title] = ev.color;
-            }
-        });
-
         document.querySelectorAll('.theme-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const theme = e.target.dataset.theme;
-                currentTheme = theme;
-                localStorage.setItem('timeblocks_theme', theme);
-                updateCuteBlockColor();
-                
-                // 기존 일정들의 색상을 새 테마로 일괄 변경
-                resetColorMap();
-                events.forEach(ev => {
-                    ev.color = getThemeColorForTitle(ev.title);
-                });
-                saveEvents();
-                render();
+                currentTheme = e.target.dataset.theme;
+                localStorage.setItem('timeblocks_theme', currentTheme);
+                document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === currentTheme));
+                titleColorMap = {};
+                events.forEach(ev => ev.color = getThemeColorForTitle(ev.title));
+                saveEvents(); render();
             });
         });
 
-        // 유틸 함수
-        function rgbToHex(rgbStr) {
-            const rgb = rgbStr.match(/\d+/g);
-            if (!rgb || rgb.length < 3) return '#ffb3ba';
-            const toHex = c => Number(c).toString(16).padStart(2, '0');
-            return `#${toHex(rgb[0])}${toHex(rgb[1])}${toHex(rgb[2])}`;
-        }
-
-        function formatDate(d) {
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        function getStartOfWeek(date) {
-            const d = new Date(date);
-            const day = d.getDay();
-            const diff = d.getDate() - day;
-            return new Date(d.setDate(diff));
-        }
-
-        function getEventsForDate(targetDateStr) {
-            const targetDateObj = new Date(targetDateStr);
-            const targetDayOfWeek = targetDateObj.getDay();
-
+        /** 유틸리티 **/
+        function formatDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+        function getStartOfWeek(date) { const d = new Date(date); d.setDate(d.getDate() - d.getDay()); return d; }
+        function getEventsForDate(dateStr) {
+            const targetDate = new Date(dateStr);
             return events.filter(ev => {
-                if (!ev.isRoutine && ev.date === targetDateStr) return true;
+                if (!ev.isRoutine && ev.date === dateStr) return true;
                 if (ev.isRoutine) {
-                    const evDateObj = new Date(ev.date);
-                    if (targetDateObj >= evDateObj && evDateObj.getDay() === targetDayOfWeek) {
-                        return true;
-                    }
+                    const evDate = new Date(ev.date);
+                    return targetDate >= evDate && targetDate.getDay() === evDate.getDay();
                 }
                 return false;
             });
         }
-
-        function isEventCompleted(ev, targetDateStr) {
-            if (ev.isRoutine) return ev.completedDates.includes(targetDateStr);
-            return ev.completedDates.includes(ev.date);
+        function isEventCompleted(ev, dateStr) { return ev.completedDates.includes(ev.isRoutine ? dateStr : ev.date); }
+        function rgbToHex(rgb) {
+            const res = rgb.match(/\\d+/g);
+            return res ? "#" + res.slice(0,3).map(x => parseInt(x).toString(16).padStart(2,'0')).join('') : "#ffffff";
         }
 
-        // 아이콘 클릭 이벤트들
-        function toggleComplete(id, targetDateStr, e) {
-            // 체크는 항상 가능 (아이콘 클릭 시)
-            e.stopPropagation();
-            const ev = events.find(e => e.id === id);
-            if (!ev) return;
-            const dateKey = ev.isRoutine ? targetDateStr : ev.date;
-            const idx = ev.completedDates.indexOf(dateKey);
-            if (idx > -1) ev.completedDates.splice(idx, 1);
-            else ev.completedDates.push(dateKey);
-            saveEvents();
-            render();
-        }
-
-        function toggleRoutine(id, e) {
-            if (!isLockMode) return; // 고정 모드일 때만 작동
-            e.stopPropagation();
-            const ev = events.find(e => e.id === id);
-            if (!ev) return;
-            ev.isRoutine = !ev.isRoutine;
-            saveEvents();
-            render();
-        }
-
-        /**
-         * ----------------------------------
-         * 주간 뷰: 생성, 이동 및 리사이즈
-         * ----------------------------------
-         */
-        
-        let isCreating = false;
-        let isDraggingBlock = false; // 드래그/리사이즈 중 클릭(모달 오픈) 방지용 플래그
-        let dragStartY = 0;
-        let tempEventDiv = null;
-        let activeDayCol = null;
-
-        // --- 1. 빈 공간 드래그로 '생성' ---
+        /** 일정 생성 및 드래그 **/
+        let isCreating = false, dragStartY = 0, tempEventDiv = null, activeDayCol = null, isDraggingBlock = false;
         function handleMouseDown(e) {
-            if (!isEditMode) return;
-            if (e.target.closest('.event-block') || e.target.tagName === 'BUTTON') return;
-            isCreating = true;
-            activeDayCol = e.currentTarget;
+            if (!isEditMode || e.target.closest('.event-block')) return;
+            isCreating = true; activeDayCol = e.currentTarget;
             const rect = activeDayCol.getBoundingClientRect();
             dragStartY = e.clientY - rect.top;
-
             tempEventDiv = document.createElement('div');
             tempEventDiv.className = 'event-block temp-event';
             tempEventDiv.style.backgroundColor = getThemeColorForTitle('새 일정');
             tempEventDiv.style.top = `${dragStartY}px`;
-            tempEventDiv.style.height = `50px`; // 기본 1시간
-            tempEventDiv.innerHTML = `<span class="event-title">새 일정</span>`;
-            
+            tempEventDiv.style.height = `50px`;
+            tempEventDiv.innerHTML = '<span class="event-title">새 일정</span>';
             activeDayCol.appendChild(tempEventDiv);
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
         }
-
         function handleMouseMove(e) {
-            if (!isCreating || !tempEventDiv) return;
+            if (!isCreating) return;
             const rect = activeDayCol.getBoundingClientRect();
-            let currentY = e.clientY - rect.top;
-            let height = currentY - dragStartY;
-            if (height < 15) height = 15;
-            if (dragStartY + height > 750) height = 750 - dragStartY;
-            tempEventDiv.style.height = `${height}px`;
+            let h = (e.clientY - rect.top) - dragStartY;
+            tempEventDiv.style.height = `${Math.max(15, Math.min(h, 750 - dragStartY))}px`;
         }
-
         function handleMouseUp(e) {
             if (!isCreating) return;
             isCreating = false;
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
-
             const dateStr = activeDayCol.dataset.date;
-            let height = parseFloat(tempEventDiv.style.height);
-            if (height <= 50) height = 50; // 터치 시 1시간 단위
-            const color = tempEventDiv.style.backgroundColor;
-
-            const startTime = 9 + (dragStartY / 50);
-            const endTime = startTime + (height / 50);
-
-            const newEvent = {
-                id: Date.now().toString(),
-                title: '새 일정',
-                date: dateStr,
-                startTime: startTime,
-                endTime: endTime,
-                color: color.startsWith('rgb') ? rgbToHex(color) : color,
-                isRoutine: false,
-                completedDates: [],
-                isAuto: false
-            };
-
-            events.push(newEvent);
-            saveEvents();
-            
-            tempEventDiv.remove();
-            tempEventDiv = null;
-            activeDayCol = null;
-
-            render();
-            openEditModal(newEvent.id);
+            let h = parseFloat(tempEventDiv.style.height);
+            if (h <= 50) h = 50;
+            const startT = 9 + (dragStartY / 50), endT = startT + (h / 50);
+            const newEv = { id: Date.now().toString(), title: '새 일정', date: dateStr, startTime: startT, endTime: endT, color: tempEventDiv.style.backgroundColor, isRoutine: false, completedDates: [], isAuto: false };
+            events.push(newEv); saveEvents(); tempEventDiv.remove(); render(); openEditModal(newEv.id);
         }
 
-        // --- 2. 기존 블록 '드래그 앤 드롭 이동' ---
-        function setupBlockDrag(block, ev) {
-            block.draggable = isEditMode;
-            block.addEventListener('dragstart', (e) => {
-                isDraggingBlock = true;
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', ev.id);
-                const rect = block.getBoundingClientRect();
-                e.dataTransfer.setData('offsetY', e.clientY - rect.top);
-                setTimeout(() => block.style.opacity = '0.5', 0);
-            });
-            block.addEventListener('dragend', (e) => {
-                block.style.opacity = '1';
-                setTimeout(() => isDraggingBlock = false, 100);
-            });
-            
-            block.addEventListener('click', (e) => {
-                if (!isEditMode) return;
-                if (isDraggingBlock) return;
-                openEditModal(ev.id);
-            });
-        }
-
-        // --- 3. 크기 조절 (칸 늘리고 줄이기) ---
-        function setupBlockResize(block, ev) {
-            const handle = document.createElement('div');
-            handle.className = 'resize-handle';
-            block.appendChild(handle);
-
-            handle.addEventListener('mousedown', (e) => {
-                if (!isEditMode) return;
-                e.stopPropagation();
-                block.draggable = false;
-                isDraggingBlock = true;
-                
-                let isResizing = true;
-                let startY = e.clientY;
-                let startHeight = parseFloat(block.style.height);
-
-                function onMouseMove(moveEv) {
-                    if (!isResizing) return;
-                    let diff = moveEv.clientY - startY;
-                    let newHeight = startHeight + diff;
-                    if (newHeight < 15) newHeight = 15; // 최소 15분
-                    
-                    const currentTop = parseFloat(block.style.top);
-                    if (currentTop + newHeight > 750) { // 자정(24:00)을 넘어가지 않도록
-                        newHeight = 750 - currentTop;
-                    }
-                    block.style.height = `${newHeight}px`;
-                }
-
-                function onMouseUp(upEv) {
-                    if (!isResizing) return;
-                    isResizing = false;
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-
-                    let finalHeight = parseFloat(block.style.height);
-                    let duration = finalHeight / 50;
-                    duration = Math.round(duration * 60) / 50; // 분 단위 정밀 편집 // 15분 단위로 스냅
-                    if (duration < 0.25) duration = 0.25;
-
-                    ev.endTime = ev.startTime + duration;
-                    if (ev.endTime > 750) ev.endTime = 24;
-
-                    saveEvents();
-                    render();
-                    
-                    setTimeout(() => {
-                        block.draggable = true;
-                        isDraggingBlock = false;
-                    }, 100);
-                }
-
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-            });
-        }
-
-        function setupColDrop(col, dateStr) {
-            col.addEventListener('dragover', (e) => {
-                e.preventDefault(); // 드롭 허용
-                e.dataTransfer.dropEffect = 'move';
-                col.classList.add('drag-over');
-            });
-            col.addEventListener('dragleave', (e) => {
-                col.classList.remove('drag-over');
-            });
-            col.addEventListener('drop', (e) => {
-                e.preventDefault();
-                col.classList.remove('drag-over');
-                
-                const id = e.dataTransfer.getData('text/plain');
-                if (!id) return;
-                
-                const offsetY = parseFloat(e.dataTransfer.getData('offsetY')) || 0;
-                const ev = events.find(item => item.id === id);
-                if (!ev) return;
-
-                const rect = col.getBoundingClientRect();
-                const dropY = e.clientY - rect.top - offsetY;
-
-                const duration = ev.endTime - ev.startTime;
-                let newStartTime = 9 + (dropY / 50);
-                
-                newStartTime = Math.round(newStartTime * 60) / 50; // 분 단위 정밀 편집 
-                
-                if (newStartTime < 9) newStartTime = 9;
-                let newEndTime = newStartTime + duration;
-                if (newEndTime > 750) {
-                    newEndTime = 24;
-                    newStartTime = 750 - duration;
-                }
-
-                ev.date = dateStr;
-                ev.startTime = newStartTime;
-                ev.endTime = newEndTime;
-                
-                saveEvents();
-                render();
-            });
-        }
-
-
-        /**
-         * ----------------------------------
-         * 하루 일정 자동 추천 로직 (여유로운 배분)
-         * ----------------------------------
-         */
-        
-        document.getElementById('autoDate').value = formatDate(new Date());
-
-        function handleAutoSchedule(isRegenerate = false) {
+        /** AI 스케줄러 **/
+        function handleAutoSchedule() {
             const dateStr = document.getElementById('autoDate').value;
-            if (!dateStr) return alert('날짜를 선택해주세요.');
-            const text = document.getElementById('autoTasks').value;
-            const tasks = text.split('
-').map(t => t.trim()).filter(t => t);
-            
+            if (!dateStr) return alert('날짜를 선택하세요.');
+            const tasks = document.getElementById('autoTasks').value.split('\n').map(t=>t.trim()).filter(t=>t);
             events = events.filter(ev => !(ev.date === dateStr && ev.isAuto));
-            let scheduledTasks = [];
+            let scheduled = [];
+            const meals = [{t:'🍴 점심', s:12, e:13}, {t:'🍴 저녁', s:18, e:19}];
+            meals.forEach(m => scheduled.push({id:'ai_'+Math.random(), title:m.t, date:dateStr, startTime:m.s, endTime:m.e, color:'#FFF9C4', isRoutine:false, completedDates:[], isAuto:true}));
             
-            const meals = [
-                { title: '🍴 점심 식사', startTime: 12, endTime: 13, color: '#FFF9C4' },
-                { title: '🍴 저녁 식사', startTime: 18, endTime: 19, color: '#FFF9C4' }
-            ];
-            meals.forEach(m => {
-                scheduledTasks.push({
-                    id: 'auto_meal_' + Date.now() + Math.random(),
-                    title: m.title, date: dateStr, startTime: m.startTime, endTime: m.endTime,
-                    color: m.color, isRoutine: false, completedDates: [], isAuto: true
-                });
-            });
-
-            const currentDayEvents = getEventsForDate(dateStr);
-            function isSlotAvailable(start, end) {
-                if (start < 9 || end > 24) return false;
-                const allEvs = [...currentDayEvents, ...scheduledTasks];
-                for (let ev of allEvs) {
-                    if (start < ev.endTime && end > ev.startTime) return false;
-                }
-                return true;
+            const currentEvs = getEventsForDate(dateStr);
+            function available(s, e) {
+                if (s<9 || e>24) return false;
+                return ![...currentEvs, ...scheduled].some(ev => s < ev.endTime && e > ev.startTime);
             }
-            function findSlot(duration, pStart, pEnd) {
-                for (let t = pStart; t <= pEnd - duration; t += 0.5) {
-                    if (isSlotAvailable(t, t + duration)) return t;
-                }
+            function find(dur, ps, pe) {
+                for(let t=ps; t<=pe-dur; t+=0.5) if (available(t, t+dur)) return t;
                 return null;
             }
-
-            let easyTasks = tasks.filter(t => t.length < 5 || t.includes('쉬운') || t.includes('간단'));
-            let hardTasks = tasks.filter(t => !easyTasks.includes(t));
-
-            easyTasks.forEach(t => {
-                let s = findSlot(1, 9, 12);
+            tasks.forEach(t => {
+                let dur = t.length < 5 ? 1 : 2;
+                let s = dur === 1 ? find(1, 9, 12) : (find(2, 13, 18) || find(2, 19, 24));
                 if (s !== null) {
-                    scheduledTasks.push({ id: 'auto_'+Date.now()+Math.random(), title: t, date: dateStr, startTime: s, endTime: s+1, color: getThemeColorForTitle(t), isRoutine: false, completedDates: [], isAuto: true });
-                    if (isSlotAvailable(s+1, s+1.5)) scheduledTasks.push({ id: 'auto_br_'+Date.now()+Math.random(), title: '☕ 휴식', date: dateStr, startTime: s+1, endTime: s+1.5, color: '#F5F5F5', isAuto: true, isRoutine: false, completedDates: [] });
+                    scheduled.push({id:'ai_'+Math.random(), title:t, date:dateStr, startTime:s, endTime:s+dur, color:getThemeColorForTitle(t), isRoutine:false, completedDates:[], isAuto:true});
+                    if (available(s+dur, s+dur+0.5)) scheduled.push({id:'ai_br_'+Math.random(), title:'☕ 휴식', date:dateStr, startTime:s+dur, endTime:s+dur+0.5, color:'#F5F5F5', isRoutine:false, completedDates:[], isAuto:true});
                 }
             });
-            hardTasks.forEach(t => {
-                let s = findSlot(2, 13, 18) || findSlot(2, 19, 24) || findSlot(2, 9, 24);
-                if (s !== null) {
-                    scheduledTasks.push({ id: 'auto_'+Date.now()+Math.random(), title: t, date: dateStr, startTime: s, endTime: s+2, color: getThemeColorForTitle(t), isRoutine: false, completedDates: [], isAuto: true });
-                    if (isSlotAvailable(s+2, s+2.5)) scheduledTasks.push({ id: 'auto_br_'+Date.now()+Math.random(), title: '☕ 휴식', date: dateStr, startTime: s+2, endTime: s+2.5, color: '#F5F5F5', isAuto: true, isRoutine: false, completedDates: [] });
-                }
-            });
-
-            events.push(...scheduledTasks);
-            saveEvents();
-            currentDate = new Date(dateStr);
-            render();
+            events.push(...scheduled); saveEvents(); currentDate = new Date(dateStr); render();
             document.getElementById('autoRegenerateBtn').style.display = 'block';
-            document.getElementById('autoGenerateBtn').textContent = '다시 추천 받기';
         }
-                return true;
-            }
+        document.getElementById('autoGenerateBtn').addEventListener('click', handleAutoSchedule);
 
-            function findSlot(duration, preferredStart = 9, preferredEnd = 24) {
-                for (let time = preferredStart; time <= preferredEnd - duration; time += 0.5) {
-                    if (isSlotAvailable(time, time + duration)) return time;
-                }
-                if (preferredStart !== 9 || preferredEnd !== 24) {
-                     for (let time = 9; time <= 750 - duration; time += 0.5) {
-                        if (isSlotAvailable(time, time + duration)) return time;
-                    }
-                }
-                return null;
-            }
-
-            let parsedTasks = tasks.map(t => {
-                let duration = 1;
-                let pStart = 9, pEnd = 24;
-                let priority = 3;
-                
-                if (t.includes('밥') || t.includes('식사') || t.includes('점심') || t.includes('저녁')) {
-                    duration = 1;
-                    priority = 1;
-                } else if (t.includes('운동')) {
-                    duration = 1.5;
-                    priority = 2;
-                } else if (t.includes('공부') || t.includes('과제')) {
-                    duration = 2;
-                }
-                return { title: t, duration, pStart, pEnd, priority };
-            });
-
-            parsedTasks = parsedTasks.slice(0, 5);
-            parsedTasks.sort((a, b) => a.priority - b.priority);
-
-            parsedTasks.forEach(task => {
-                let startTime = null;
-                if (task.priority === 1) { 
-                    startTime = findSlot(task.duration, 12, 14);
-                    if (startTime === null) startTime = findSlot(task.duration, 18, 20);
-                    if (startTime === null) startTime = findSlot(task.duration, 9, 24);
-                } else {
-                    startTime = findSlot(task.duration, task.pStart, task.pEnd);
-                }
-
-                if (startTime !== null) {
-                    scheduledTasks.push({
-                        id: 'auto_' + Date.now() + Math.random().toString(36).substr(2, 5),
-                        title: task.title,
-                        date: dateStr,
-                        startTime: startTime,
-                        endTime: startTime + task.duration,
-                        color: getThemeColorForTitle(task.title),
-                        isRoutine: false,
-                        completedDates: [],
-                        isAuto: true
-                    });
-                } else {
-                    failedTasks.push(task.title);
-                }
-            });
-
-            if (scheduledTasks.length > 0) {
-                events.push(...scheduledTasks);
-                saveEvents();
-                
-                const selectedDateObj = new Date(dateStr);
-                currentDate = selectedDateObj;
-                currentView = 'weekly';
-                document.getElementById('viewSelect').value = 'weekly';
-                
-                render();
-
-                document.getElementById('autoRegenerateBtn').style.display = 'block';
-                document.getElementById('autoGenerateBtn').textContent = '추가 추천 받기';
-                
-                if (failedTasks.length > 0) {
-                    alert('일정을 여유롭게 배치할 수 있는 빈 시간이 부족합니다:\n' + failedTasks.join(', '));
-                }
-            } else {
-                alert('배치할 수 있는 빈 시간이 없습니다.');
-            }
-        }
-
-        document.getElementById('autoGenerateBtn').addEventListener('click', () => handleAutoSchedule(false));
-        document.getElementById('autoRegenerateBtn').addEventListener('click', () => handleAutoSchedule(true));
-
-
-        /**
-         * ----------------------------------
-         * 뷰 렌더링
-         * ----------------------------------
-         */
-
+        /** 렌더링 **/
         function renderWeeklyView() {
-            const startOfWeek = getStartOfWeek(currentDate);
-            const headerContainer = document.getElementById('weeklyHeader');
-            const bodyContainer = document.getElementById('weeklyBody');
-
-            const days = ['일', '월', '화', '수', '목', '금', '토'];
-            let headerHTML = `<div></div>`;
-            for (let i = 0; i < 7; i++) {
-                const currentDay = new Date(startOfWeek);
-                currentDay.setDate(startOfWeek.getDate() + i);
-                
-                const isSun = i === 0;
-                const isSat = i === 6;
-                const weekendClass = isSun ? 'sunday' : (isSat ? 'saturday' : '');
-                headerHTML += `<div class="day-header ${weekendClass}">${days[i]}<br>${currentDay.getMonth() + 1}/${currentDay.getDate()}</div>`;
-    
+            const start = getStartOfWeek(currentDate);
+            const days = ['일','월','화','수','목','금','토'];
+            let headerHTML = '<div></div>';
+            for(let i=0; i<7; i++) {
+                const d = new Date(start); d.setDate(start.getDate()+i);
+                headerHTML += `<div class="day-header ${i===0?'sunday':i===6?'saturday':''}">${days[i]}<br>${d.getMonth()+1}/${d.getDate()}</div>`;
             }
-            headerContainer.innerHTML = headerHTML;
-
-            bodyContainer.querySelectorAll('.day-col').forEach(col => col.remove());
-
-            for (let i = 0; i < 7; i++) {
-                const currentDay = new Date(startOfWeek);
-                currentDay.setDate(startOfWeek.getDate() + i);
-                
-                const dateStr = formatDate(currentDay);
-                const isToday = dateStr === formatDate(new Date());
-
-                const dayCol = document.createElement('div');
-                dayCol.className = 'day-col' + (isToday ? ' today' : '');
-    
-                dayCol.dataset.date = dateStr;
-                
-                // 마우스 드래그 생성
-                dayCol.addEventListener('mousedown', handleMouseDown);
-                // HTML5 Drag&Drop 허용
-                setupColDrop(dayCol, dateStr);
-
-                const dayEvents = getEventsForDate(dateStr);
-                dayEvents.forEach(ev => {
+            document.getElementById('weeklyHeader').innerHTML = headerHTML;
+            document.querySelectorAll('.day-col').forEach(c => c.remove());
+            for(let i=0; i<7; i++) {
+                const d = new Date(start); d.setDate(start.getDate()+i);
+                const ds = formatDate(d);
+                const col = document.createElement('div');
+                col.className = 'day-col' + (ds === formatDate(new Date()) ? ' today' : '');
+                col.dataset.date = ds;
+                col.addEventListener('mousedown', handleMouseDown);
+                setupColDrop(col, ds);
+                getEventsForDate(ds).forEach(ev => {
                     const block = document.createElement('div');
-                    block.className = 'event-block' + (isEditMode ? ' edit-active' : '');
-                    const completed = isEventCompleted(ev, dateStr);
-                    if (completed) block.classList.add('completed');
+                    block.className = 'event-block' + (isEditMode?' edit-active':'') + (isLockMode?' lock-mode-active':'');
+                    const comp = isEventCompleted(ev, ds);
+                    if (comp) block.classList.add('completed');
                     if (ev.isRoutine) block.classList.add('locked');
-                    
                     block.style.backgroundColor = ev.color;
-                    const top = (ev.startTime - 9) * 50;
-                    const height = (ev.endTime - ev.startTime) * 50;
-                    block.style.top = `${top}px`;
-                    block.style.height = `${height}px`;
-                    block.style.zIndex = Math.floor(top);
-
+                    block.style.top = `${(ev.startTime-9)*50}px`;
+                    block.style.height = `${(ev.endTime-ev.startTime)*50}px`;
                     block.innerHTML = `
-                        <span class="event-title" style="${completed ? 'text-decoration: line-through;' : ''}">${ev.title}</span>
-                        <button class="lock-btn ${ev.isRoutine ? 'active' : ''}" title="루틴 고정" onclick="toggleRoutine('${ev.id}', event)">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                        </button>
-                        <button class="check-btn ${completed ? 'active' : ''}" title="완료" onclick="toggleComplete('${ev.id}', '${dateStr}', event)">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        </button>
+                        <span class="event-title" style="${comp?'text-decoration:line-through':''}">${ev.title}</span>
+                        <button class="lock-btn ${ev.isRoutine?'active':''}" onclick="toggleRoutine('${ev.id}',event)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></button>
+                        <button class="check-btn ${comp?'active':''}" onclick="toggleComplete('${ev.id}','${ds}',event)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
                     `;
-                    
-                    setupBlockDrag(block, ev); // 크기 조절 핸들 추가
-                    setupBlockResize(block, ev); 
-                    
-                    dayCol.appendChild(block);
+                    setupBlockDrag(block, ev); setupBlockResize(block, ev);
+                    col.appendChild(block);
                 });
-                bodyContainer.appendChild(dayCol);
+                document.getElementById('weeklyBody').appendChild(col);
             }
         }
-
         function renderMonthlyView() {
-            const bodyContainer = document.getElementById('monthlyBody');
-            bodyContainer.innerHTML = '';
-            
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const firstDayOfWeek = firstDay.getDay();
-
-            for (let i = 0; i < firstDayOfWeek; i++) {
-                const emptyCell = document.createElement('div');
-                emptyCell.className = 'month-day-cell';
-                emptyCell.style.backgroundColor = '#fafafa';
-                bodyContainer.appendChild(emptyCell);
-            }
-
-            for (let d = 1; d <= lastDay.getDate(); d++) {
-                const cellDate = new Date(year, month, d);
-                const dateStr = formatDate(cellDate);
-                const cell = document.createElement('div');
-                cell.className = 'month-day-cell';
+            const body = document.getElementById('monthlyBody'); body.innerHTML = '';
+            const y = currentDate.getFullYear(), m = currentDate.getMonth();
+            const first = new Date(y, m, 1), last = new Date(y, m+1, 0);
+            for(let i=0; i<first.getDay(); i++) body.appendChild(document.createElement('div')).className='month-day-cell';
+            for(let d=1; d<=last.getDate(); d++) {
+                const ds = formatDate(new Date(y, m, d));
+                const cell = document.createElement('div'); cell.className = 'month-day-cell';
                 cell.innerHTML = `<div class="month-date">${d}</div>`;
-                
-                // 월간 뷰도 드롭 타겟 지원
-                cell.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    cell.classList.add('drag-over');
+                getEventsForDate(ds).forEach(ev => {
+                    const div = document.createElement('div'); div.className = 'month-event';
+                    div.style.background = ev.color; div.innerHTML = `<span>${ev.title}</span>`;
+                    div.onclick = () => { if(isEditMode) openEditModal(ev.id); };
+                    cell.appendChild(div);
                 });
-                cell.addEventListener('dragleave', (e) => {
-                    cell.classList.remove('drag-over');
-                });
-                cell.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    cell.classList.remove('drag-over');
-                    const id = e.dataTransfer.getData('text/plain');
-                    if (!id) return;
-                    const ev = events.find(item => item.id === id);
-                    if (!ev) return;
-                    ev.date = dateStr;
-                    saveEvents();
-                    render();
-                });
-                
-                const dayEvents = getEventsForDate(dateStr);
-                dayEvents.forEach(ev => {
-                    const completed = isEventCompleted(ev, dateStr);
-                    const eventDiv = document.createElement('div');
-                    eventDiv.className = `month-event ${completed ? 'completed' : ''}`;
-                    eventDiv.style.setProperty('--event-color', ev.color);
-                    eventDiv.innerHTML = `<span>${ev.title}</span>`;
-                    
-                    // 월간 뷰의 아이템도 드래그 가능하게 지원
-                    eventDiv.draggable = isEditMode;
-                    eventDiv.addEventListener('dragstart', (e) => {
-                        isDraggingBlock = true;
-                        e.dataTransfer.setData('text/plain', ev.id);
-                        setTimeout(() => eventDiv.style.opacity = '0.5', 0);
-                    });
-                    eventDiv.addEventListener('dragend', (e) => {
-                        eventDiv.style.opacity = '1';
-                        setTimeout(() => isDraggingBlock = false, 100);
-                    });
-
-                    eventDiv.addEventListener('click', (e) => {
-                        if (!isEditMode) return;
-                        if (isDraggingBlock) return;
-                        e.stopPropagation();
-                        openEditModal(ev.id);
-                    });
-
-                    cell.appendChild(eventDiv);
-                });
-                bodyContainer.appendChild(cell);
+                body.appendChild(cell);
             }
         }
 
-        /**
-         * ----------------------------------
-         * 모달 이벤트 및 렌더링 초기화
-         * ----------------------------------
-         */
-
+        /** 모달 및 기타 **/
         let editingEventId = null;
-
         function openEditModal(id) {
-            const ev = events.find(e => e.id === id);
-            if (!ev) return;
+            const ev = events.find(e => e.id === id); if(!ev) return;
             editingEventId = id;
             document.getElementById('editTitle').value = ev.title;
             document.getElementById('editColor').value = ev.color;
-            
-            // 시간 분리 표시
-            const startH = Math.floor(ev.startTime);
-            const startM = Math.round((ev.startTime - startH) * 60);
-            const endH = Math.floor(ev.endTime);
-            const endM = Math.round((ev.endTime - endH) * 60);
-            
-            document.getElementById('startH').value = startH;
-            document.getElementById('startM').value = startM;
-            document.getElementById('endH').value = endH;
-            document.getElementById('endM').value = endM;
-
+            document.getElementById('startH').value = Math.floor(ev.startTime);
+            document.getElementById('startM').value = Math.round((ev.startTime % 1)*60);
+            document.getElementById('endH').value = Math.floor(ev.endTime);
+            document.getElementById('endM').value = Math.round((ev.endTime % 1)*60);
             document.getElementById('editModal').classList.add('active');
-            document.getElementById('editTitle').focus();
         }
-
-        function closeEditModal() {
-            document.getElementById('editModal').classList.remove('active');
-            editingEventId = null;
-        }
-
-        document.getElementById('saveBtn').addEventListener('click', () => {
-            if (!editingEventId) return;
+        document.getElementById('saveBtn').onclick = () => {
             const ev = events.find(e => e.id === editingEventId);
-            if (ev) {
-                const newTitle = document.getElementById('editTitle').value.trim();
-                const newTitleFinal = newTitle || '새 일정';
-                
-                // 시간 입력값 읽기
-                const sh = parseInt(document.getElementById('startH').value) || 9;
-                const sm = parseInt(document.getElementById('startM').value) || 0;
-                const eh = parseInt(document.getElementById('endH').value) || 10;
-                const em = parseInt(document.getElementById('endM').value) || 0;
-                
-                const newStartTime = sh + (sm / 60);
-                const newEndTime = eh + (em / 60);
-
-                ev.title = newTitleFinal;
-                ev.startTime = Math.max(9, Math.min(24, newStartTime));
-                ev.endTime = Math.max(ev.startTime + 0.1, Math.min(24, newEndTime));
+            if(ev) {
+                ev.title = document.getElementById('editTitle').value || '새 일정';
                 ev.color = document.getElementById('editColor').value;
+                ev.startTime = parseInt(document.getElementById('startH').value) + (parseInt(document.getElementById('startM').value)/60);
+                ev.endTime = parseInt(document.getElementById('endH').value) + (parseInt(document.getElementById('endM').value)/60);
             }
-            saveEvents();
-            closeEditModal();
-            render();
-        });
-
-        document.getElementById('deleteBtn').addEventListener('click', () => {
-            if (!editingEventId) return;
-            events = events.filter(e => e.id !== editingEventId);
-            saveEvents();
-            closeEditModal();
-            render();
-        });
-
-        // 복사 붙여넣기 기능 (모달 내부 버튼)
-        document.getElementById('copyBtn').addEventListener('click', () => {
-            if (!editingEventId) return;
-            const ev = events.find(e => e.id === editingEventId);
-            if (ev) {
-                // 원래 일정의 바로 아래 시간(1시간 뒤)에 똑같은 일정 복사 생성
-                let newStartTime = ev.startTime + 1;
-                let newEndTime = ev.endTime + 1;
-                
-                // 만약 24시를 넘어간다면 자정 위로 맞춤
-                if (newEndTime > 750) {
-                    newEndTime = 24;
-                    newStartTime = 750 - (ev.endTime - ev.startTime);
-                }
-
-                const newEvent = {
-                    ...ev,
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-                    startTime: newStartTime,
-                    endTime: newEndTime,
-                    completedDates: [] // 복사본은 완료 상태 초기화
-                };
-
-                events.push(newEvent);
-                saveEvents();
-            }
-            closeEditModal();
-            render();
-        });
-
-        document.getElementById('cancelBtn').addEventListener('click', closeEditModal);
-
-        function updateHeaderDisplay() {
-            const display = document.getElementById('currentDateDisplay');
-            if (currentView === 'weekly') {
-                const start = getStartOfWeek(currentDate);
-                const end = new Date(start);
-                end.setDate(start.getDate() + 6);
-                if (start.getMonth() === end.getMonth()) {
-                    display.textContent = `${start.getFullYear()}년 ${start.getMonth() + 1}월`;
-                } else {
-                    display.textContent = `${start.getMonth() + 1}월 - ${end.getMonth() + 1}월`;
-                }
-            } else {
-                display.textContent = `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월`;
-            }
+            saveEvents(); document.getElementById('editModal').classList.remove('active'); render();
+        };
+        document.getElementById('deleteBtn').onclick = () => { events = events.filter(e=>e.id!==editingEventId); saveEvents(); document.getElementById('editModal').classList.remove('active'); render(); };
+        document.getElementById('cancelBtn').onclick = () => document.getElementById('editModal').classList.remove('active');
+        
+        function setupBlockDrag(b, ev) {
+            b.draggable = isEditMode;
+            b.ondragstart = (e) => { isDraggingBlock = true; e.dataTransfer.setData('text', ev.id); e.dataTransfer.setData('offset', e.clientY - b.getBoundingClientRect().top); };
+            b.ondragend = () => isDraggingBlock = false;
+            b.onclick = (e) => { if(isEditMode && !isDraggingBlock) openEditModal(ev.id); };
         }
+        function setupBlockResize(b, ev) {
+            const h = document.createElement('div'); h.className = 'resize-handle'; b.appendChild(h);
+            h.onmousedown = (e) => {
+                if(!isEditMode) return; e.stopPropagation();
+                const startY = e.clientY, startH = b.offsetHeight;
+                const onMove = (me) => { b.style.height = `${Math.max(15, startH + (me.clientY - startY))}px`; };
+                const onUp = () => {
+                    ev.endTime = ev.startTime + (b.offsetHeight/50);
+                    saveEvents(); render(); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
+                };
+                document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+            };
+        }
+        function setupColDrop(c, ds) {
+            c.ondragover = (e) => { e.preventDefault(); c.classList.add('drag-over'); };
+            c.ondragleave = () => c.classList.remove('drag-over');
+            c.ondrop = (e) => {
+                e.preventDefault(); c.classList.remove('drag-over');
+                const id = e.dataTransfer.getData('text'), offset = parseFloat(e.dataTransfer.getData('offset'));
+                const ev = events.find(item => item.id === id); if(!ev) return;
+                const newS = 9 + ((e.clientY - c.getBoundingClientRect().top - offset)/50);
+                const dur = ev.endTime - ev.startTime;
+                ev.date = ds; ev.startTime = newS; ev.endTime = newS + dur;
+                saveEvents(); render();
+            };
+        }
+        function toggleComplete(id, ds, e) { e.stopPropagation(); const ev = events.find(e=>e.id===id); if(!ev) return; const k = ev.isRoutine?ds:ev.date; const i = ev.completedDates.indexOf(k); if(i>-1) ev.completedDates.splice(i,1); else ev.completedDates.push(k); saveEvents(); render(); }
+        function toggleRoutine(id, e) { if(!isLockMode) return; e.stopPropagation(); const ev = events.find(e=>e.id===id); if(!ev) return; ev.isRoutine = !ev.isRoutine; saveEvents(); render(); }
 
         function render() {
-            updateHeaderDisplay();
-            if (currentView === 'weekly') {
-                document.getElementById('weeklyView').style.display = 'flex';
-                document.getElementById('monthlyView').style.display = 'none';
-                renderWeeklyView();
-            } else {
-                document.getElementById('weeklyView').style.display = 'none';
-                document.getElementById('monthlyView').style.display = 'flex';
-                renderMonthlyView();
-            }
+            const d = document.getElementById('currentDateDisplay');
+            d.textContent = `${currentDate.getFullYear()}년 ${currentDate.getMonth()+1}월`;
+            if (currentView === 'weekly') { document.getElementById('weeklyView').style.display='block'; document.getElementById('monthlyView').style.display='none'; renderWeeklyView(); }
+            else { document.getElementById('weeklyView').style.display='none'; document.getElementById('monthlyView').style.display='grid'; renderMonthlyView(); }
         }
-
-        document.getElementById('prevBtn').addEventListener('click', () => {
-            if (currentView === 'weekly') currentDate.setDate(currentDate.getDate() - 7);
-            else currentDate.setMonth(currentDate.getMonth() - 1);
-            render();
-        });
-
-        document.getElementById('nextBtn').addEventListener('click', () => {
-            if (currentView === 'weekly') currentDate.setDate(currentDate.getDate() + 7);
-            else currentDate.setMonth(currentDate.getMonth() + 1);
-            render();
-        });
-
-        document.getElementById('viewSelect').addEventListener('change', (e) => {
-            currentView = e.target.value;
-            render();
-        });
-
+        document.getElementById('prevBtn').onclick = () => { currentDate.setDate(currentDate.getDate()-(currentView==='weekly'?7:30)); render(); };
+        document.getElementById('nextBtn').onclick = () => { currentDate.setDate(currentDate.getDate()+(currentView==='weekly'?7:30)); render(); };
+        document.getElementById('viewSelect').onchange = (e) => { currentView = e.target.value; render(); };
         render();
     </script>
 </body>

@@ -301,10 +301,13 @@
             cursor: pointer;
             background: transparent;
             border: none;
-            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             opacity: 0.4;
-            transition: opacity 0.2s;
-            padding: 2px;
+            transition: opacity 0.2s, transform 0.2s;
+            padding: 4px;
+            color: inherit;
         }
 
         .event-block .lock-btn.active {
@@ -318,10 +321,13 @@
             cursor: pointer;
             background: transparent;
             border: none;
-            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             opacity: 0.4;
-            transition: opacity 0.2s;
-            padding: 2px;
+            transition: opacity 0.2s, transform 0.2s;
+            padding: 4px;
+            color: inherit;
         }
 
         .event-block .check-btn.active {
@@ -329,6 +335,13 @@
         }
 
         .event-block button:hover {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+
+        .event-block .lock-btn.active:hover,
+        .event-block .check-btn.active:hover {
+            opacity: 1;
             transform: scale(1.1);
         }
 

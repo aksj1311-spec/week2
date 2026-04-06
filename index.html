@@ -664,6 +664,60 @@
             }
         }
     
+
+        /* ----- 편집 모드 스타일 ----- */
+        .edit-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            border: none;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+            z-index: 9000;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 11px;
+            font-weight: 700;
+            gap: 2px;
+        }
+        .edit-fab.active {
+            background: #ff4d4d;
+            transform: scale(1.1);
+        }
+        .edit-fab svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* ----- 모바일 화면 고정 ----- */
+        @media (max-width: 768px) {
+            html, body {
+                height: 100%;
+                overflow: hidden;
+                position: fixed;
+                width: 100%;
+            }
+            .app-container {
+                height: calc(100% - 140px); /* 헤더 추정 높이 */
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .edit-fab {
+                bottom: 20px;
+                right: 20px;
+                width: 70px;
+                height: 70px;
+            }
+        }
+    
     </style>
 </head>
 <body>
@@ -717,7 +771,15 @@
                 <div class="weekly-body" id="weeklyBody">
                     <div class="time-col">
                         <!-- 9:00 ~ 24:00 (15시간) -->
-                        <script>
+                    
+    <!-- 편집 플로팅 버튼 -->
+    <button id="editToggleBtn" class="edit-fab">
+        <svg id="editIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        <svg id="doneIcon" style="display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span id="editLabel">편집</span>
+    </button>
+    
+    <script>
                             for(let i = 9; i <= 24; i++) {
                                 document.write(`<div class="time-slot"><span>${i}:00</span></div>`);
                             }
@@ -785,6 +847,32 @@
          * ----------------------------------
          */
         
+
+        let isEditMode = false;
+        
+        const editBtn = document.getElementById('editToggleBtn');
+        const editIcon = document.getElementById('editIcon');
+        const doneIcon = document.getElementById('doneIcon');
+        const editLabel = document.getElementById('editLabel');
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            if (isEditMode) {
+                editBtn.classList.add('active');
+                editIcon.style.display = 'none';
+                doneIcon.style.display = 'block';
+                editLabel.textContent = '완료';
+            } else {
+                editBtn.classList.remove('active');
+                editIcon.style.display = 'block';
+                doneIcon.style.display = 'none';
+                editLabel.textContent = '편집';
+            }
+            render(); // 버튼 상태 변경 시 렌더링을 다시 해서 드래그 등의 효과 갱신 가능 (필요 시)
+        }
+
+        editBtn.addEventListener('click', toggleEditMode);
+    
         let currentDate = new Date(); // 기본값: 오늘
         let currentView = 'weekly'; // 'weekly' | 'monthly' 
 
@@ -1004,6 +1092,7 @@
 
         // --- 1. 빈 공간 드래그로 '생성' ---
         function handleMouseDown(e) {
+            if (!isEditMode) return;
             if (e.target.closest('.event-block') || e.target.tagName === 'BUTTON') return;
             isCreating = true;
             activeDayCol = e.currentTarget;
@@ -1070,7 +1159,7 @@
 
         // --- 2. 기존 블록 '드래그 앤 드롭 이동' ---
         function setupBlockDrag(block, ev) {
-            block.draggable = true;
+            block.draggable = isEditMode;
             block.addEventListener('dragstart', (e) => {
                 isDraggingBlock = true;
                 e.dataTransfer.effectAllowed = 'move';
@@ -1085,6 +1174,7 @@
             });
             
             block.addEventListener('click', (e) => {
+                if (!isEditMode) return;
                 if (isDraggingBlock) return;
                 openEditModal(ev.id);
             });
@@ -1097,6 +1187,7 @@
             block.appendChild(handle);
 
             handle.addEventListener('mousedown', (e) => {
+                if (!isEditMode) return;
                 e.stopPropagation();
                 block.draggable = false;
                 isDraggingBlock = true;
@@ -1432,7 +1523,7 @@
                     eventDiv.innerHTML = `<span>${ev.title}</span>`;
                     
                     // 월간 뷰의 아이템도 드래그 가능하게 지원
-                    eventDiv.draggable = true;
+                    eventDiv.draggable = isEditMode;
                     eventDiv.addEventListener('dragstart', (e) => {
                         isDraggingBlock = true;
                         e.dataTransfer.setData('text/plain', ev.id);
@@ -1444,6 +1535,7 @@
                     });
 
                     eventDiv.addEventListener('click', (e) => {
+                        if (!isEditMode) return;
                         if (isDraggingBlock) return;
                         e.stopPropagation();
                         openEditModal(ev.id);

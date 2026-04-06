@@ -52,6 +52,38 @@
             border-radius: 4px;
             box-shadow: 2px 2px 0px #ffdfba, 4px 4px 0px #ffffba;
             transform: rotate(-10deg);
+            transition: background 0.3s;
+        }
+
+        .theme-selector {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 24px;
+            padding-left: 24px;
+            border-left: 1px solid #e9e9e7;
+        }
+
+        .theme-selector span {
+            font-size: 13px;
+            font-weight: 600;
+            color: #777;
+            margin-right: 4px;
+        }
+
+        .theme-btn {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 1px solid rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            padding: 0;
+        }
+
+        .theme-btn:hover, .theme-btn.active {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 2px #fff, 0 0 0 4px #007bff;
         }
 
         .nav-controls {
@@ -254,6 +286,11 @@
             background-size: 100% 60px;
             background-image: linear-gradient(to bottom, #f7f7f5 1px, transparent 1px);
             cursor: crosshair;
+            transition: background-color 0.2s;
+        }
+        
+        .day-col.drag-over {
+            background-color: rgba(0, 123, 255, 0.05);
         }
 
         /* 일정 블록 (주간) */
@@ -388,10 +425,15 @@
             display: flex;
             flex-direction: column;
             background: #ffffff;
+            transition: background-color 0.2s;
         }
 
         .month-day-cell:nth-child(7n) {
             border-right: none;
+        }
+        
+        .month-day-cell.drag-over {
+            background-color: rgba(0, 123, 255, 0.05);
         }
 
         .month-date {
@@ -399,6 +441,7 @@
             font-weight: 500;
             margin-bottom: 8px;
             color: #777;
+            pointer-events: none;
         }
 
         /* 일정 텍스트 (월간) */
@@ -527,8 +570,17 @@
 
     <header>
         <div class="header-title">
-            <div class="cute-block"></div>
+            <div class="cute-block" id="cuteBlock"></div>
             <h1>TimeBlocks</h1>
+            
+            <!-- 테마 선택 영역 -->
+            <div class="theme-selector">
+                <span>테마 추천:</span>
+                <button class="theme-btn active" title="파스텔" data-theme="pastel" style="background: linear-gradient(135deg, #ffb3ba, #bae1ff)"></button>
+                <button class="theme-btn" title="오션 쿨" data-theme="ocean" style="background: linear-gradient(135deg, #d4f0f0, #8fcaca)"></button>
+                <button class="theme-btn" title="선셋 웜" data-theme="sunset" style="background: linear-gradient(135deg, #ffd3b6, #ffaaa5)"></button>
+                <button class="theme-btn" title="포레스트 힐" data-theme="forest" style="background: linear-gradient(135deg, #c1e1c1, #a1c181)"></button>
+            </div>
         </div>
         <div class="nav-controls">
             <button id="prevBtn">&lt;</button>
@@ -618,26 +670,71 @@
          * ----------------------------------
          */
         
-        let currentDate = new Date(); // 기본값: 오늘 (예: 2026-04-06)
+        let currentDate = new Date(); // 기본값: 오늘
         let currentView = 'weekly'; // 'weekly' | 'monthly'
 
-        // LocalStorage에서 데이터 불러오기 (없으면 빈 배열)
+        // LocalStorage에서 데이터 불러오기
         let events = JSON.parse(localStorage.getItem('timeblocks_events')) || [];
 
-        // 데이터 변경 시 LocalStorage에 저장하는 함수
         function saveEvents() {
             localStorage.setItem('timeblocks_events', JSON.stringify(events));
         }
 
-        // 랜덤 파스텔 색상 생성 (HEX)
-        function getRandomPastelColor() {
-            const r = Math.floor(Math.random() * 50 + 200); // 200~250
-            const g = Math.floor(Math.random() * 50 + 200);
-            const b = Math.floor(Math.random() * 50 + 200);
-            const toHex = c => c.toString(16).padStart(2, '0');
-            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        /**
+         * ----------------------------------
+         * 색상 테마 로직
+         * ----------------------------------
+         */
+        
+        const palettes = {
+            pastel: ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff'],
+            ocean:  ['#d4f0f0', '#8fcaca', '#cce2cb', '#b6cfb6', '#a8e6cf'],
+            sunset: ['#ffc0cb', '#ffd3b6', '#ffaaa5', '#ff8b94', '#f9a8d4'],
+            forest: ['#c1e1c1', '#d4e5cb', '#b5e7a0', '#e3eaa7', '#a1c181']
+        };
+
+        let currentTheme = localStorage.getItem('timeblocks_theme') || 'pastel';
+
+        // 큐트 블록 색상 업데이트
+        function updateCuteBlockColor() {
+            const block = document.getElementById('cuteBlock');
+            const colors = palettes[currentTheme];
+            block.style.background = colors[0];
+            block.style.boxShadow = `2px 2px 0px ${colors[1]}, 4px 4px 0px ${colors[2]}`;
+            
+            // 버튼 활성화 상태 업데이트
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.dataset.theme === currentTheme) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        updateCuteBlockColor();
+
+        function getRandomThemeColor() {
+            const colors = palettes[currentTheme] || palettes['pastel'];
+            return colors[Math.floor(Math.random() * colors.length)];
         }
 
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const theme = e.target.dataset.theme;
+                currentTheme = theme;
+                localStorage.setItem('timeblocks_theme', theme);
+                updateCuteBlockColor();
+                
+                // 기존 일정들의 색상을 새 테마로 일괄 변경
+                events.forEach(ev => {
+                    const colors = palettes[theme];
+                    ev.color = colors[Math.floor(Math.random() * colors.length)];
+                });
+                saveEvents();
+                render();
+            });
+        });
+
+        // 유틸 함수
         function rgbToHex(rgbStr) {
             const rgb = rgbStr.match(/\d+/g);
             if (!rgb || rgb.length < 3) return '#ffb3ba';
@@ -652,7 +749,6 @@
             return `${year}-${month}-${day}`;
         }
 
-        // 주의 시작일(일요일)
         function getStartOfWeek(date) {
             const d = new Date(date);
             const day = d.getDay();
@@ -660,7 +756,6 @@
             return new Date(d.setDate(diff));
         }
 
-        // 해당 날짜에 해당하는 이벤트 필터링
         function getEventsForDate(targetDateStr) {
             const targetDateObj = new Date(targetDateStr);
             const targetDayOfWeek = targetDateObj.getDay();
@@ -682,7 +777,7 @@
             return ev.completedDates.includes(ev.date);
         }
 
-        // 완료 토글 (체크)
+        // 아이콘 클릭 이벤트들
         function toggleComplete(id, targetDateStr, e) {
             e.stopPropagation();
             const ev = events.find(e => e.id === id);
@@ -691,43 +786,44 @@
             const idx = ev.completedDates.indexOf(dateKey);
             if (idx > -1) ev.completedDates.splice(idx, 1);
             else ev.completedDates.push(dateKey);
-            saveEvents(); // 데이터 저장
+            saveEvents();
             render();
         }
 
-        // 루틴 토글 (고정)
         function toggleRoutine(id, e) {
             e.stopPropagation();
             const ev = events.find(e => e.id === id);
             if (!ev) return;
             ev.isRoutine = !ev.isRoutine;
-            saveEvents(); // 데이터 저장
+            saveEvents();
             render();
         }
 
         /**
          * ----------------------------------
-         * 주간 뷰 드래그 생성
+         * 주간 뷰: 생성 및 드래그 앤 드롭
          * ----------------------------------
          */
         
-        let isDragging = false;
+        let isCreating = false;
+        let isDraggingBlock = false; // 드래그 중 클릭(모달 오픈) 방지용 플래그
         let dragStartY = 0;
         let tempEventDiv = null;
         let activeDayCol = null;
 
+        // --- 1. 빈 공간 드래그로 '생성' ---
         function handleMouseDown(e) {
             if (e.target.closest('.event-block') || e.target.tagName === 'BUTTON') return;
-            isDragging = true;
+            isCreating = true;
             activeDayCol = e.currentTarget;
             const rect = activeDayCol.getBoundingClientRect();
             dragStartY = e.clientY - rect.top;
 
             tempEventDiv = document.createElement('div');
             tempEventDiv.className = 'event-block temp-event';
-            tempEventDiv.style.backgroundColor = getRandomPastelColor();
+            tempEventDiv.style.backgroundColor = getRandomThemeColor();
             tempEventDiv.style.top = `${dragStartY}px`;
-            tempEventDiv.style.height = `60px`; // 최소 1시간 높이
+            tempEventDiv.style.height = `60px`;
             tempEventDiv.innerHTML = `<span class="event-title">새 일정</span>`;
             
             activeDayCol.appendChild(tempEventDiv);
@@ -736,18 +832,18 @@
         }
 
         function handleMouseMove(e) {
-            if (!isDragging || !tempEventDiv) return;
+            if (!isCreating || !tempEventDiv) return;
             const rect = activeDayCol.getBoundingClientRect();
             let currentY = e.clientY - rect.top;
             let height = currentY - dragStartY;
-            if (height < 15) height = 15; // 최소 15분
-            if (dragStartY + height > 900) height = 900 - dragStartY; // 최대 24:00 제한
+            if (height < 15) height = 15;
+            if (dragStartY + height > 900) height = 900 - dragStartY;
             tempEventDiv.style.height = `${height}px`;
         }
 
         function handleMouseUp(e) {
-            if (!isDragging) return;
-            isDragging = false;
+            if (!isCreating) return;
+            isCreating = false;
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
 
@@ -755,7 +851,6 @@
             const height = parseFloat(tempEventDiv.style.height);
             const color = tempEventDiv.style.backgroundColor;
 
-            // 시작시간 계산 (1시간=60px, 9:00 시작)
             const startTime = 9 + (dragStartY / 60);
             const endTime = startTime + (height / 60);
 
@@ -768,20 +863,89 @@
                 color: color.startsWith('rgb') ? rgbToHex(color) : color,
                 isRoutine: false,
                 completedDates: [],
-                isAuto: false // 수동 생성
+                isAuto: false
             };
 
             events.push(newEvent);
-            saveEvents(); // 데이터 저장
+            saveEvents();
             
             tempEventDiv.remove();
             tempEventDiv = null;
             activeDayCol = null;
 
             render();
-            // 생성 직후 모달 열기
             openEditModal(newEvent.id);
         }
+
+        // --- 2. 기존 블록 '드래그 앤 드롭 이동' ---
+        function setupBlockDrag(block, ev) {
+            block.draggable = true;
+            block.addEventListener('dragstart', (e) => {
+                isDraggingBlock = true;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', ev.id);
+                const rect = block.getBoundingClientRect();
+                // 마우스가 블록 내 어디를 잡았는지 위치 기억
+                e.dataTransfer.setData('offsetY', e.clientY - rect.top);
+                setTimeout(() => block.style.opacity = '0.5', 0);
+            });
+            block.addEventListener('dragend', (e) => {
+                block.style.opacity = '1';
+                setTimeout(() => isDraggingBlock = false, 100);
+            });
+            
+            block.addEventListener('click', (e) => {
+                if (isDraggingBlock) return;
+                openEditModal(ev.id);
+            });
+        }
+
+        function setupColDrop(col, dateStr) {
+            col.addEventListener('dragover', (e) => {
+                e.preventDefault(); // 드롭 허용
+                e.dataTransfer.dropEffect = 'move';
+                col.classList.add('drag-over');
+            });
+            col.addEventListener('dragleave', (e) => {
+                col.classList.remove('drag-over');
+            });
+            col.addEventListener('drop', (e) => {
+                e.preventDefault();
+                col.classList.remove('drag-over');
+                
+                const id = e.dataTransfer.getData('text/plain');
+                if (!id) return;
+                
+                const offsetY = parseFloat(e.dataTransfer.getData('offsetY')) || 0;
+                const ev = events.find(item => item.id === id);
+                if (!ev) return;
+
+                const rect = col.getBoundingClientRect();
+                const dropY = e.clientY - rect.top - offsetY;
+
+                const duration = ev.endTime - ev.startTime;
+                let newStartTime = 9 + (dropY / 60);
+                
+                // 15분 단위(0.25) 스냅 기능
+                newStartTime = Math.round(newStartTime * 4) / 4; 
+                
+                if (newStartTime < 9) newStartTime = 9;
+                let newEndTime = newStartTime + duration;
+                if (newEndTime > 24) {
+                    newEndTime = 24;
+                    newStartTime = 24 - duration;
+                }
+
+                // 업데이트
+                ev.date = dateStr;
+                ev.startTime = newStartTime;
+                ev.endTime = newEndTime;
+                
+                saveEvents();
+                render();
+            });
+        }
+
 
         /**
          * ----------------------------------
@@ -789,7 +953,6 @@
          * ----------------------------------
          */
         
-        // 날짜 초기값 셋팅
         document.getElementById('autoDate').value = formatDate(new Date());
 
         function handleAutoSchedule(isRegenerate = false) {
@@ -800,9 +963,7 @@
             const tasks = text.split('\n').map(t => t.trim()).filter(t => t);
             if (tasks.length === 0) return alert('할 일을 1개 이상 입력해주세요.');
             
-            // 기존 자동 생성 일정 삭제
             events = events.filter(ev => !(ev.date === dateStr && ev.isAuto));
-
             const currentDayEvents = getEventsForDate(dateStr);
             
             let scheduledTasks = [];
@@ -844,7 +1005,6 @@
                 } else if (t.includes('공부') || t.includes('과제')) {
                     duration = 2;
                 }
-                
                 return { title: t, duration, pStart, pEnd, priority };
             });
 
@@ -853,7 +1013,6 @@
 
             parsedTasks.forEach(task => {
                 let startTime = null;
-                
                 if (task.priority === 1) { 
                     startTime = findSlot(task.duration, 12, 14);
                     if (startTime === null) startTime = findSlot(task.duration, 18, 20);
@@ -869,7 +1028,7 @@
                         date: dateStr,
                         startTime: startTime,
                         endTime: startTime + task.duration,
-                        color: getRandomPastelColor(),
+                        color: getRandomThemeColor(),
                         isRoutine: false,
                         completedDates: [],
                         isAuto: true
@@ -881,7 +1040,7 @@
 
             if (scheduledTasks.length > 0) {
                 events.push(...scheduledTasks);
-                saveEvents(); // 데이터 저장
+                saveEvents();
                 
                 const selectedDateObj = new Date(dateStr);
                 currentDate = selectedDateObj;
@@ -935,7 +1094,11 @@
                 const dayCol = document.createElement('div');
                 dayCol.className = 'day-col';
                 dayCol.dataset.date = dateStr;
+                
+                // 마우스 드래그 생성
                 dayCol.addEventListener('mousedown', handleMouseDown);
+                // HTML5 Drag&Drop 허용
+                setupColDrop(dayCol, dateStr);
 
                 const dayEvents = getEventsForDate(dateStr);
                 dayEvents.forEach(ev => {
@@ -953,10 +1116,16 @@
 
                     block.innerHTML = `
                         <span class="event-title" style="${completed ? 'text-decoration: line-through;' : ''}">${ev.title}</span>
-                        <button class="lock-btn ${ev.isRoutine ? 'active' : ''}" title="루틴 고정" onclick="toggleRoutine('${ev.id}', event)">🔒</button>
-                        <button class="check-btn ${completed ? 'active' : ''}" title="완료" onclick="toggleComplete('${ev.id}', '${dateStr}', event)">✔</button>
+                        <button class="lock-btn ${ev.isRoutine ? 'active' : ''}" title="루틴 고정" onclick="toggleRoutine('${ev.id}', event)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        </button>
+                        <button class="check-btn ${completed ? 'active' : ''}" title="완료" onclick="toggleComplete('${ev.id}', '${dateStr}', event)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </button>
                     `;
-                    block.addEventListener('click', () => openEditModal(ev.id));
+                    
+                    setupBlockDrag(block, ev);
+                    
                     dayCol.appendChild(block);
                 });
                 bodyContainer.appendChild(dayCol);
@@ -987,6 +1156,27 @@
                 cell.className = 'month-day-cell';
                 cell.innerHTML = `<div class="month-date">${d}</div>`;
                 
+                // 월간 뷰도 드롭 타겟 지원
+                cell.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    cell.classList.add('drag-over');
+                });
+                cell.addEventListener('dragleave', (e) => {
+                    cell.classList.remove('drag-over');
+                });
+                cell.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    cell.classList.remove('drag-over');
+                    const id = e.dataTransfer.getData('text/plain');
+                    if (!id) return;
+                    const ev = events.find(item => item.id === id);
+                    if (!ev) return;
+                    ev.date = dateStr;
+                    saveEvents();
+                    render();
+                });
+                
                 const dayEvents = getEventsForDate(dateStr);
                 dayEvents.forEach(ev => {
                     const completed = isEventCompleted(ev, dateStr);
@@ -994,7 +1184,25 @@
                     eventDiv.className = `month-event ${completed ? 'completed' : ''}`;
                     eventDiv.style.setProperty('--event-color', ev.color);
                     eventDiv.innerHTML = `<span>${ev.title}</span>`;
-                    eventDiv.addEventListener('click', () => openEditModal(ev.id));
+                    
+                    // 월간 뷰의 아이템도 드래그 가능하게 지원
+                    eventDiv.draggable = true;
+                    eventDiv.addEventListener('dragstart', (e) => {
+                        isDraggingBlock = true;
+                        e.dataTransfer.setData('text/plain', ev.id);
+                        setTimeout(() => eventDiv.style.opacity = '0.5', 0);
+                    });
+                    eventDiv.addEventListener('dragend', (e) => {
+                        eventDiv.style.opacity = '1';
+                        setTimeout(() => isDraggingBlock = false, 100);
+                    });
+
+                    eventDiv.addEventListener('click', (e) => {
+                        if (isDraggingBlock) return;
+                        e.stopPropagation();
+                        openEditModal(ev.id);
+                    });
+
                     cell.appendChild(eventDiv);
                 });
                 bodyContainer.appendChild(cell);
@@ -1032,7 +1240,7 @@
                 ev.title = newTitle || '새 일정';
                 ev.color = document.getElementById('editColor').value;
             }
-            saveEvents(); // 데이터 저장
+            saveEvents();
             closeEditModal();
             render();
         });
@@ -1040,7 +1248,7 @@
         document.getElementById('deleteBtn').addEventListener('click', () => {
             if (!editingEventId) return;
             events = events.filter(e => e.id !== editingEventId);
-            saveEvents(); // 데이터 저장
+            saveEvents();
             closeEditModal();
             render();
         });

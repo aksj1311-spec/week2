@@ -617,6 +617,16 @@
             <button id="nextBtn">&gt;</button>
         </div>
         <div class="header-right">
+            <div class="header-legend" style="display: flex; gap: 12px; font-size: 13px; color: #777; margin-right: 20px;">
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    스케줄 고정
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    할 일 완료/미완료
+                </div>
+            </div>
             <div class="view-controls">
                 <select id="viewSelect">
                     <option value="weekly">Weekly</option>
@@ -659,7 +669,10 @@
         </main>
         
         <aside class="auto-schedule-panel">
-            <h3>✨ 하루 일정 자동 채우기</h3>
+            <h3 style="display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #007bff;"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><path d="M12 20a2 2 0 0 1 2-2v-2a2 2 0 0 1-2-2 2 2 0 0 1-2 2v2a2 2 0 0 1 2 2z"></path><path d="M20 12a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2 2 2 0 0 1 2-2h2a2 2 0 0 1 2 2z"></path><path d="M4 12a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path><rect x="9" y="9" width="6" height="6" rx="1"></rect></svg>
+                하루 일정 자동 채우기(AI 스케줄러)
+            </h3>
             <div>
                 <label for="autoDate">날짜 선택</label>
                 <input type="date" id="autoDate">
@@ -667,6 +680,7 @@
             <div>
                 <label for="autoTasks">할 일 목록 (줄바꿈으로 구분)</label>
                 <textarea id="autoTasks" rows="5" placeholder="밥먹기&#10;과제하기&#10;운동&#10;공부"></textarea>
+                <p style="font-size: 11px; color: #777; margin-top: 6px;">할 일을 작성하면 ai가 일정을 추천해줘요!</p>
             </div>
             <div class="auto-buttons">
                 <button id="autoGenerateBtn">추천 받기</button>
@@ -742,10 +756,86 @@
         }
         updateCuteBlockColor();
 
-        function getRandomThemeColor() {
-            const colors = palettes[currentTheme] || palettes['pastel'];
-            return colors[Math.floor(Math.random() * colors.length)];
+        // 색상 변환 유틸리티 (HEX -> HSL)
+        function hexToHsl(hex) {
+            hex = hex.replace(/^#/, '');
+            if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+            let r = parseInt(hex.substring(0, 2), 16) / 255;
+            let g = parseInt(hex.substring(2, 4), 16) / 255;
+            let b = parseInt(hex.substring(4, 6), 16) / 255;
+
+            let max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max == min) {
+                h = s = 0;
+            } else {
+                let d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return [h * 360, s * 100, l * 100];
         }
+
+        // HSL -> HEX
+        function hslToHex(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`;
+        }
+
+        let titleColorMap = {};
+        let colorCounter = 0;
+
+        function getThemeColorForTitle(title) {
+            if (!title) title = '새 일정';
+            if (titleColorMap[title]) return titleColorMap[title];
+
+            const colors = palettes[currentTheme] || palettes['pastel'];
+            
+            // 테마 베이스 색상 가져오기
+            const baseColorIndex = colorCounter % colors.length;
+            const baseColorHex = colors[baseColorIndex];
+            
+            // 색상을 순환하면서 명도를 조금씩 변경하여 비슷한 계열의 새로운 색상 생성
+            const cycle = Math.floor(colorCounter / colors.length);
+            const [h, s, l] = hexToHsl(baseColorHex);
+            
+            // cycle이 늘어날수록 명도를 조절 (밝아지거나 어두워짐, 제한)
+            let newL = l + (cycle % 2 === 0 ? cycle * 4 : -cycle * 4);
+            newL = Math.max(40, Math.min(95, newL)); 
+            
+            // Hue도 살짝 변형 (cycle당 5도씩 회전)
+            let newH = (h + cycle * 5) % 360;
+
+            const newHex = hslToHex(newH, s, newL);
+            
+            colorCounter++;
+            titleColorMap[title] = newHex;
+            return newHex;
+        }
+
+        function resetColorMap() {
+            titleColorMap = {};
+            colorCounter = 0;
+        }
+
+        // 초기 로드 시 기존 일정들의 색상을 매핑에 등록
+        events.forEach(ev => {
+            if (!titleColorMap[ev.title]) {
+                titleColorMap[ev.title] = ev.color;
+            }
+        });
 
         document.querySelectorAll('.theme-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -755,9 +845,9 @@
                 updateCuteBlockColor();
                 
                 // 기존 일정들의 색상을 새 테마로 일괄 변경
+                resetColorMap();
                 events.forEach(ev => {
-                    const colors = palettes[theme];
-                    ev.color = colors[Math.floor(Math.random() * colors.length)];
+                    ev.color = getThemeColorForTitle(ev.title);
                 });
                 saveEvents();
                 render();
@@ -851,7 +941,7 @@
 
             tempEventDiv = document.createElement('div');
             tempEventDiv.className = 'event-block temp-event';
-            tempEventDiv.style.backgroundColor = getRandomThemeColor();
+            tempEventDiv.style.backgroundColor = getThemeColorForTitle('새 일정');
             tempEventDiv.style.top = `${dragStartY}px`;
             tempEventDiv.style.height = `60px`;
             tempEventDiv.innerHTML = `<span class="event-title">새 일정</span>`;
@@ -1112,7 +1202,7 @@
                         date: dateStr,
                         startTime: startTime,
                         endTime: startTime + task.duration,
-                        color: getRandomThemeColor(),
+                        color: getThemeColorForTitle(task.title),
                         isRoutine: false,
                         completedDates: [],
                         isAuto: true
@@ -1322,8 +1412,15 @@
             const ev = events.find(e => e.id === editingEventId);
             if (ev) {
                 const newTitle = document.getElementById('editTitle').value.trim();
-                ev.title = newTitle || '새 일정';
-                ev.color = document.getElementById('editColor').value;
+                const newTitleFinal = newTitle || '새 일정';
+                
+                const manualColor = document.getElementById('editColor').value;
+                if (ev.title !== newTitleFinal) {
+                     ev.title = newTitleFinal;
+                     ev.color = getThemeColorForTitle(newTitleFinal);
+                } else {
+                     ev.color = manualColor;
+                }
             }
             saveEvents();
             closeEditModal();

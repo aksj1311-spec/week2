@@ -13,6 +13,7 @@
         }
 
         body {
+            width: 100%;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             color: #37352f;
             background-color: #ffffff;
@@ -265,7 +266,7 @@
 
         .weekly-header {
             display: grid;
-            grid-template-columns: 35px repeat(7, 80px);
+            grid-template-columns: 45px repeat(7, 1fr);
             border-bottom: 1px solid #e9e9e7;
             background: #f7f7f5;
         }
@@ -283,7 +284,7 @@
 
         .weekly-body {
             display: grid;
-            grid-template-columns: 35px repeat(7, 80px);
+            grid-template-columns: 45px repeat(7, 1fr);
             height: 750px; /* 15시간 * 50px (9:00 ~ 24:00) */
             position: relative;
         }
@@ -632,6 +633,15 @@
 
         /* ----- 모바일 반응형 스타일 ----- */
         @media (max-width: 768px) {
+.weekly-header, .weekly-body {
+                grid-template-columns: 40px repeat(7, 85px) !important;
+                width: fit-content;
+                min-width: 100%;
+            }
+            .weekly-view, .monthly-view {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
             header {
                 padding: 15px 20px;
                 flex-direction: column;
@@ -699,7 +709,7 @@
                 width: 100%;
             }
             .weekly-header, .weekly-body {
-                grid-template-columns: 35px repeat(7, 80px);
+                grid-template-columns: 45px repeat(7, 1fr);
             }
             .weekly-header > div {
                 font-size: 11px;

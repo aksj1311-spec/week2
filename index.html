@@ -265,7 +265,7 @@
 
         .weekly-header {
             display: grid;
-            grid-template-columns: 60px repeat(7, 1fr);
+            grid-template-columns: 30px repeat(7, 1fr);
             border-bottom: 1px solid #e9e9e7;
             background: #f7f7f5;
         }
@@ -283,8 +283,8 @@
 
         .weekly-body {
             display: grid;
-            grid-template-columns: 60px repeat(7, 1fr);
-            height: 1500px; /* 15시간 * 100px (9:00 ~ 24:00) */
+            grid-template-columns: 30px repeat(7, 1fr);
+            height: 1050px; /* 15시간 * 70px (9:00 ~ 24:00) */
             position: relative;
         }
 
@@ -295,7 +295,7 @@
         }
 
         .time-slot {
-            height: 100px;
+            height: 70px;
             text-align: right;
             padding-right: 8px;
             font-size: 12px;
@@ -305,6 +305,7 @@
         }
         
         .time-slot span {
+            display: none; /* 시간 분 표시 없애기 */
             position: absolute;
             top: -8px;
             right: 8px;
@@ -313,7 +314,7 @@
         .day-col {
             border-left: 1px solid #e9e9e7;
             position: relative;
-            background-size: 100% 100px;
+            background-size: 100% 70px;
             background-image: linear-gradient(to bottom, #f7f7f5 1px, transparent 1px);
             cursor: crosshair;
             transition: background-color 0.2s;
@@ -693,13 +694,14 @@
                 width: 100%;
             }
             .weekly-header, .weekly-body {
-                grid-template-columns: 40px repeat(7, 1fr);
+                grid-template-columns: 30px repeat(7, 1fr);
             }
             .weekly-header > div {
                 font-size: 11px;
                 padding: 8px 0;
             }
             .time-slot span {
+            display: none; /* 시간 분 표시 없애기 */
                 font-size: 10px;
                 right: 4px;
             }
@@ -776,6 +778,12 @@
         .event-block.locked {
             border: 3px solid #333;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    
+
+        .event-block.edit-active .lock-btn,
+        .event-block.edit-active .check-btn {
+            display: none !important;
         }
     
     </style>
@@ -1117,6 +1125,7 @@
 
         // 아이콘 클릭 이벤트들
         function toggleComplete(id, targetDateStr, e) {
+            if (isEditMode) return; // 편집 모드일 땐 체크 금지
             e.stopPropagation();
             const ev = events.find(e => e.id === id);
             if (!ev) return;
@@ -1129,6 +1138,7 @@
         }
 
         function toggleRoutine(id, e) {
+            if (isEditMode) return; // 편집 모드일 땐 잠금 금지
             e.stopPropagation();
             const ev = events.find(e => e.id === id);
             if (!ev) return;
@@ -1162,7 +1172,7 @@
             tempEventDiv.className = 'event-block temp-event';
             tempEventDiv.style.backgroundColor = getThemeColorForTitle('새 일정');
             tempEventDiv.style.top = `${dragStartY}px`;
-            tempEventDiv.style.height = `60px`;
+            tempEventDiv.style.height = `70px`; // 기본 1시간
             tempEventDiv.innerHTML = `<span class="event-title">새 일정</span>`;
             
             activeDayCol.appendChild(tempEventDiv);
@@ -1187,10 +1197,11 @@
             document.removeEventListener('mouseup', handleMouseUp);
 
             const dateStr = activeDayCol.dataset.date;
-            const height = parseFloat(tempEventDiv.style.height);
+            let height = parseFloat(tempEventDiv.style.height);
+            if (height <= 70) height = 70; // 터치 시 1시간 단위
             const color = tempEventDiv.style.backgroundColor;
 
-            const startTime = 9 + (dragStartY / 100);
+            const startTime = 9 + (dragStartY / 70);
             const endTime = startTime + (height / 60);
 
             const newEvent = {
@@ -1262,8 +1273,8 @@
                     if (newHeight < 15) newHeight = 15; // 최소 15분
                     
                     const currentTop = parseFloat(block.style.top);
-                    if (currentTop + newHeight > 1500) { // 자정(24:00)을 넘어가지 않도록
-                        newHeight = 1500 - currentTop;
+                    if (currentTop + newHeight > 1050) { // 자정(24:00)을 넘어가지 않도록
+                        newHeight = 1050 - currentTop;
                     }
                     block.style.height = `${newHeight}px`;
                 }
@@ -1275,8 +1286,8 @@
                     document.removeEventListener('mouseup', onMouseUp);
 
                     let finalHeight = parseFloat(block.style.height);
-                    let duration = finalHeight / 100;
-                    duration = Math.round(duration * 4) / 4; // 15분 단위로 스냅
+                    let duration = finalHeight / 70;
+                    duration = Math.round(duration * 60) / 60; // 분 단위 정밀 편집 // 15분 단위로 스냅
                     if (duration < 0.25) duration = 0.25;
 
                     ev.endTime = ev.startTime + duration;
@@ -1320,9 +1331,9 @@
                 const dropY = e.clientY - rect.top - offsetY;
 
                 const duration = ev.endTime - ev.startTime;
-                let newStartTime = 9 + (dropY / 100);
+                let newStartTime = 9 + (dropY / 70);
                 
-                newStartTime = Math.round(newStartTime * 4) / 4; 
+                newStartTime = Math.round(newStartTime * 60) / 60; // 분 단위 정밀 편집 
                 
                 if (newStartTime < 9) newStartTime = 9;
                 let newEndTime = newStartTime + duration;
@@ -1498,14 +1509,14 @@
                 const dayEvents = getEventsForDate(dateStr);
                 dayEvents.forEach(ev => {
                     const block = document.createElement('div');
-                    block.className = 'event-block';
+                    block.className = 'event-block' + (isEditMode ? ' edit-active' : '');
                     const completed = isEventCompleted(ev, dateStr);
                     if (completed) block.classList.add('completed');
                     if (ev.isRoutine) block.classList.add('locked');
                     
                     block.style.backgroundColor = ev.color;
-                    const top = (ev.startTime - 9) * 100;
-                    const height = (ev.endTime - ev.startTime) * 100;
+                    const top = (ev.startTime - 9) * 70;
+                    const height = (ev.endTime - ev.startTime) * 70;
                     block.style.top = `${top}px`;
                     block.style.height = `${height}px`;
                     block.style.zIndex = Math.floor(top);

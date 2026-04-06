@@ -265,7 +265,7 @@
 
         .weekly-header {
             display: grid;
-            grid-template-columns: 30px repeat(7, 1fr);
+            grid-template-columns: 40px repeat(7, 150px);
             border-bottom: 1px solid #e9e9e7;
             background: #f7f7f5;
         }
@@ -283,8 +283,8 @@
 
         .weekly-body {
             display: grid;
-            grid-template-columns: 30px repeat(7, 1fr);
-            height: 1050px; /* 15시간 * 70px (9:00 ~ 24:00) */
+            grid-template-columns: 40px repeat(7, 150px);
+            height: 750px; /* 15시간 * 50px (9:00 ~ 24:00) */
             position: relative;
         }
 
@@ -305,7 +305,7 @@
         }
         
         .time-slot span {
-            display: none; /* 시간 분 표시 없애기 */
+            display: block; /* 시 표시 */
             position: absolute;
             top: -8px;
             right: 8px;
@@ -694,14 +694,14 @@
                 width: 100%;
             }
             .weekly-header, .weekly-body {
-                grid-template-columns: 30px repeat(7, 1fr);
+                grid-template-columns: 40px repeat(7, 150px);
             }
             .weekly-header > div {
                 font-size: 11px;
                 padding: 8px 0;
             }
             .time-slot span {
-            display: none; /* 시간 분 표시 없애기 */
+            display: block; /* 시 표시 */
                 font-size: 10px;
                 right: 4px;
             }
@@ -762,7 +762,7 @@
                 width: 100%;
             }
             .app-container {
-                height: calc(100% - 140px); /* 헤더 추정 높이 */
+                height: calc(100% - 100px); /* 헤더 추정 높이 */
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
             }
@@ -785,6 +785,45 @@
         .event-block.edit-active .check-btn {
             display: none !important;
         }
+    
+
+        .weekly-view, .monthly-view {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .weekly-header, .weekly-body {
+            width: fit-content;
+            min-width: 100%;
+        }
+        /* 가로로 넓게, 세로는 더 콤팩트하게 (기존 70px에서 50px로 시도) */
+        .weekly-body {
+            height: 750px; /* 15시간 * 50px */
+        }
+        .time-slot, .day-col {
+            height: 50px;
+        }
+        .day-col {
+            background-size: 100% 50px;
+        }
+        .event-title {
+            font-size: 12px;
+            white-space: normal; /* 글자 보이게 줄바꿈 허용 */
+            word-break: break-all;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        
+        /* 오늘 날짜 하이라이트 */
+        .day-col.today {
+            background-color: rgba(255, 251, 230, 0.6);
+            border-right: 2px solid #ff9c6e;
+            border-left: 2px solid #ff9c6e;
+        }
+        
+        /* 주말 색상 */
+        .day-header.sunday { color: #ff4d4f !important; font-weight: 800; }
+        .day-header.saturday { color: #1890ff !important; font-weight: 800; }
     
     </style>
 </head>
@@ -848,7 +887,7 @@
     
     <script>
                             for(let i = 9; i <= 24; i++) {
-                                document.write(`<div class="time-slot"><span>${i}:00</span></div>`);
+                                document.write(`<div class="time-slot"><span>${i}</span></div>`);
                             }
                         </script>
                     </div>
@@ -1172,7 +1211,7 @@
             tempEventDiv.className = 'event-block temp-event';
             tempEventDiv.style.backgroundColor = getThemeColorForTitle('새 일정');
             tempEventDiv.style.top = `${dragStartY}px`;
-            tempEventDiv.style.height = `70px`; // 기본 1시간
+            tempEventDiv.style.height = `50px`; // 기본 1시간
             tempEventDiv.innerHTML = `<span class="event-title">새 일정</span>`;
             
             activeDayCol.appendChild(tempEventDiv);
@@ -1198,10 +1237,10 @@
 
             const dateStr = activeDayCol.dataset.date;
             let height = parseFloat(tempEventDiv.style.height);
-            if (height <= 70) height = 70; // 터치 시 1시간 단위
+            if (height <= 50) height = 50; // 터치 시 1시간 단위
             const color = tempEventDiv.style.backgroundColor;
 
-            const startTime = 9 + (dragStartY / 70);
+            const startTime = 9 + (dragStartY / 50);
             const endTime = startTime + (height / 60);
 
             const newEvent = {
@@ -1273,8 +1312,8 @@
                     if (newHeight < 15) newHeight = 15; // 최소 15분
                     
                     const currentTop = parseFloat(block.style.top);
-                    if (currentTop + newHeight > 1050) { // 자정(24:00)을 넘어가지 않도록
-                        newHeight = 1050 - currentTop;
+                    if (currentTop + newHeight > 750) { // 자정(24:00)을 넘어가지 않도록
+                        newHeight = 750 - currentTop;
                     }
                     block.style.height = `${newHeight}px`;
                 }
@@ -1286,7 +1325,7 @@
                     document.removeEventListener('mouseup', onMouseUp);
 
                     let finalHeight = parseFloat(block.style.height);
-                    let duration = finalHeight / 70;
+                    let duration = finalHeight / 50;
                     duration = Math.round(duration * 60) / 60; // 분 단위 정밀 편집 // 15분 단위로 스냅
                     if (duration < 0.25) duration = 0.25;
 
@@ -1331,7 +1370,7 @@
                 const dropY = e.clientY - rect.top - offsetY;
 
                 const duration = ev.endTime - ev.startTime;
-                let newStartTime = 9 + (dropY / 70);
+                let newStartTime = 9 + (dropY / 50);
                 
                 newStartTime = Math.round(newStartTime * 60) / 60; // 분 단위 정밀 편집 
                 
@@ -1486,7 +1525,12 @@
             for (let i = 0; i < 7; i++) {
                 const currentDay = new Date(startOfWeek);
                 currentDay.setDate(startOfWeek.getDate() + i);
-                headerHTML += `<div class="day-header">${days[i]}<br>${currentDay.getMonth() + 1}/${currentDay.getDate()}</div>`;
+                
+                const isSun = i === 0;
+                const isSat = i === 6;
+                const weekendClass = isSun ? 'sunday' : (isSat ? 'saturday' : '');
+                headerHTML += `<div class="day-header ${weekendClass}">${days[i]}<br>${currentDay.getMonth() + 1}/${currentDay.getDate()}</div>`;
+    
             }
             headerContainer.innerHTML = headerHTML;
 
@@ -1495,10 +1539,13 @@
             for (let i = 0; i < 7; i++) {
                 const currentDay = new Date(startOfWeek);
                 currentDay.setDate(startOfWeek.getDate() + i);
+                
                 const dateStr = formatDate(currentDay);
+                const isToday = dateStr === formatDate(new Date());
 
                 const dayCol = document.createElement('div');
-                dayCol.className = 'day-col';
+                dayCol.className = 'day-col' + (isToday ? ' today' : '');
+    
                 dayCol.dataset.date = dateStr;
                 
                 // 마우스 드래그 생성
@@ -1515,8 +1562,8 @@
                     if (ev.isRoutine) block.classList.add('locked');
                     
                     block.style.backgroundColor = ev.color;
-                    const top = (ev.startTime - 9) * 70;
-                    const height = (ev.endTime - ev.startTime) * 70;
+                    const top = (ev.startTime - 9) * 50;
+                    const height = (ev.endTime - ev.startTime) * 50;
                     block.style.top = `${top}px`;
                     block.style.height = `${height}px`;
                     block.style.zIndex = Math.floor(top);

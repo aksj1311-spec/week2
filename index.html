@@ -394,7 +394,7 @@
             if (!isCreating) return;
             const rect = activeDayCol.getBoundingClientRect();
             let h = (e.clientY - rect.top) - dragStartY;
-            tempEventDiv.style.height = `${Math.max(15, Math.min(h, 750 - dragStartY))}px`;
+            tempEventDiv.style.height = `${Math.max(16.7, Math.min(h, 750 - dragStartY))}px`;
         }
         function handleMouseUp(e) {
             if (!isCreating) return;
@@ -403,7 +403,7 @@
             document.removeEventListener('mouseup', handleMouseUp);
             const dateStr = activeDayCol.dataset.date;
             let h = parseFloat(tempEventDiv.style.height);
-            if (h <= 50) h = 50;
+            if (h < 16.7) h = 16.7;
             const startT = 9 + (dragStartY / 50), endT = startT + (h / 50);
             const newEv = { id: Date.now().toString(), title: '새 일정', date: dateStr, startTime: startT, endTime: endT, color: tempEventDiv.style.backgroundColor, isRoutine: false, completedDates: [], isAuto: false };
             events.push(newEv); saveEvents(); tempEventDiv.remove(); render(); openEditModal(newEv.id);
@@ -416,27 +416,67 @@
             const tasks = document.getElementById('autoTasks').value.split('\n').map(t=>t.trim()).filter(t=>t);
             events = events.filter(ev => !(ev.date === dateStr && ev.isAuto));
             let scheduled = [];
-            const meals = [{t:'🍴 점심', s:12, e:13}, {t:'🍴 저녁', s:18, e:19}];
-            meals.forEach(m => scheduled.push({id:'ai_'+Math.random(), title:m.t, date:dateStr, startTime:m.s, endTime:m.e, color:'#FFF9C4', isRoutine:false, completedDates:[], isAuto:true}));
             
             const currentEvs = getEventsForDate(dateStr);
+            const meals = [{t:'🍴 점심', s:12, e:13}, {t:'🍴 저녁', s:18, e:19}];
+            
             function available(s, e) {
-                if (s<9 || e>24) return false;
-                return ![...currentEvs, ...scheduled].some(ev => s < ev.endTime && e > ev.startTime);
+                if (s < 9 || e > 24) return false;
+                return ![...currentEvs, ...scheduled].some(ev => {
+                    const overlap = s < ev.endTime && e > ev.startTime;
+                    return overlap;
+                });
             }
-            function find(dur, ps, pe) {
-                for(let t=ps; t<=pe-dur; t+=0.5) if (available(t, t+dur)) return t;
-                return null;
-            }
+
+            let nextTime = 9;
             tasks.forEach(t => {
-                let dur = t.length < 5 ? 1 : 2;
-                let s = dur === 1 ? find(1, 9, 12) : (find(2, 13, 18) || find(2, 19, 24));
-                if (s !== null) {
-                    scheduled.push({id:'ai_'+Math.random(), title:t, date:dateStr, startTime:s, endTime:s+dur, color:getThemeColorForTitle(t), isRoutine:false, completedDates:[], isAuto:true});
-                    if (available(s+dur, s+dur+0.5)) scheduled.push({id:'ai_br_'+Math.random(), title:'☕ 휴식', date:dateStr, startTime:s+dur, endTime:s+dur+0.5, color:'#F5F5F5', isRoutine:false, completedDates:[], isAuto:true});
+                let dur = t.length < 5 ? 1 : 1.5;
+                let placed = false;
+                
+                while (nextTime + dur <= 24) {
+                    // 식사 시간 체크 및 자동 삽입
+                    const meal = meals.find(m => !scheduled.some(s => s.title === m.t) && nextTime >= m.s);
+                    if (meal) {
+                        if (available(meal.s, meal.e)) {
+                            scheduled.push({id:'ai_'+Math.random(), title:meal.t, date:dateStr, startTime:meal.s, endTime:meal.e, color:'#FFF9C4', isRoutine:false, completedDates:[], isAuto:true});
+                            nextTime = meal.e;
+                        }
+                    }
+
+                    if (available(nextTime, nextTime + dur)) {
+                        scheduled.push({id:'ai_'+Math.random(), title:t, date:dateStr, startTime:nextTime, endTime:nextTime+dur, color:getThemeColorForTitle(t), isRoutine:false, completedDates:[], isAuto:true});
+                        nextTime += dur;
+                        placed = true;
+                        
+                        // 휴식 시간 (20분) 추가
+                        if (available(nextTime, nextTime + 0.33)) {
+                            scheduled.push({id:'ai_br_'+Math.random(), title:'☕ 휴식', date:dateStr, startTime:nextTime, endTime:nextTime+0.33, color:'#F5F5F5', isRoutine:false, completedDates:[], isAuto:true});
+                            nextTime += 0.33;
+                        }
+                        break;
+                    }
+                    nextTime += 0.25; // 15분 단위로 이동하며 빈 공간 탐색
                 }
             });
-            events.push(...scheduled); saveEvents(); currentDate = new Date(dateStr); render();
+
+            // 남은 식사 시간 강제 삽입 시도
+            meals.forEach(m => {
+                if (!scheduled.some(s => s.title === m.t)) {
+                    let s = m.s;
+                    while (s + 1 <= 24) {
+                        if (available(s, s + 1)) {
+                            scheduled.push({id:'ai_'+Math.random(), title:m.t, date:dateStr, startTime:s, endTime:s+1, color:'#FFF9C4', isRoutine:false, completedDates:[], isAuto:true});
+                            break;
+                        }
+                        s += 0.5;
+                    }
+                }
+            });
+
+            events.push(...scheduled);
+            saveEvents();
+            currentDate = new Date(dateStr);
+            render();
             document.getElementById('autoRegenerateBtn').style.display = 'block';
         }
         document.getElementById('autoGenerateBtn').addEventListener('click', handleAutoSchedule);
@@ -536,7 +576,7 @@
             h.onmousedown = (e) => {
                 if(!isEditMode) return; e.stopPropagation();
                 const startY = e.clientY, startH = b.offsetHeight;
-                const onMove = (me) => { b.style.height = `${Math.max(15, startH + (me.clientY - startY))}px`; };
+                const onMove = (me) => { b.style.height = `${Math.max(16.7, startH + (me.clientY - startY))}px`; };
                 const onUp = () => {
                     ev.endTime = ev.startTime + (b.offsetHeight/50);
                     saveEvents(); render(); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);

@@ -139,6 +139,18 @@
         .lock-fab { bottom: 110px; background: #f0f0f0; color: #333; border: 2px solid #ccc; }
         .lock-fab.active { background: #333; color: white; border-color: #000; }
 
+        /* 휴지통 */
+        .trash-can {
+            position: fixed; left: 30px; bottom: 30px; width: 75px; height: 75px; border-radius: 16px;
+            background: #ffffff; border: 2px dashed #ff4d4d; color: #ff4d4d; z-index: 9000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: default; transition: all 0.3s; opacity: 0; pointer-events: none;
+            box-shadow: 0 4px 12px rgba(255, 77, 77, 0.15);
+        }
+        .trash-can.visible { opacity: 1; pointer-events: auto; }
+        .trash-can.drag-over { background: #ff4d4d; color: white; border-style: solid; transform: scale(1.1); box-shadow: 0 8px 24px rgba(255, 77, 77, 0.3); }
+        .trash-can span { font-size: 11px; font-weight: 700; margin-top: 4px; }
+
         /* 주말 색상 */
         .day-header.sunday { color: #ff4d4f; }
         .day-header.saturday { color: #1890ff; }
@@ -156,6 +168,7 @@
             .edit-fab, .lock-fab { right: 20px; width: 70px; height: 70px; }
             .edit-fab { bottom: 20px; }
             .lock-fab { bottom: 100px; }
+            .trash-can { left: 20px; bottom: 20px; width: 70px; height: 70px; }
             body.edit-mode-locked { overflow: hidden; position: fixed; width: 100%; }
         }
     </style>
@@ -242,6 +255,12 @@
         </aside>
     </div>
 
+    <!-- 휴지통 -->
+    <div id="trashCan" class="trash-can">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        <span>삭제하기</span>
+    </div>
+
     <!-- 플로팅 버튼 -->
     <button id="lockToggleBtn" class="lock-fab">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
@@ -292,6 +311,7 @@
         let isLockMode = false;
         const editBtn = document.getElementById('editToggleBtn');
         const lockBtn = document.getElementById('lockToggleBtn');
+        const trashCan = document.getElementById('trashCan');
 
         function toggleEditMode() {
             isEditMode = !isEditMode;
@@ -301,12 +321,14 @@
                 document.getElementById('editIcon').style.display = 'none';
                 document.getElementById('doneIcon').style.display = 'block';
                 document.getElementById('editLabel').textContent = '완료';
+                trashCan.classList.add('visible');
                 if (isLockMode) toggleLockMode();
             } else {
                 editBtn.classList.remove('active');
                 document.getElementById('editIcon').style.display = 'block';
                 document.getElementById('doneIcon').style.display = 'none';
                 document.getElementById('editLabel').textContent = '편집';
+                trashCan.classList.remove('visible');
             }
             render();
         }
@@ -318,6 +340,20 @@
         }
         editBtn.addEventListener('click', toggleEditMode);
         lockBtn.addEventListener('click', toggleLockMode);
+
+        /** 휴지통 로직 **/
+        trashCan.ondragover = (e) => { e.preventDefault(); trashCan.classList.add('drag-over'); };
+        trashCan.ondragleave = () => trashCan.classList.remove('drag-over');
+        trashCan.ondrop = (e) => {
+            e.preventDefault();
+            trashCan.classList.remove('drag-over');
+            const id = e.dataTransfer.getData('text');
+            if (id) {
+                events = events.filter(ev => ev.id !== id);
+                saveEvents();
+                render();
+            }
+        };
 
         /** 테마 및 색상 **/
         const palettes = {
@@ -379,7 +415,7 @@
             tempEventDiv.className = 'event-block temp-event';
             tempEventDiv.style.backgroundColor = getThemeColorForTitle('새 일정');
             tempEventDiv.style.top = `${dragStartY}px`;
-            tempEventDiv.style.height = `16.7px`; // 최소 크기로 시작
+            tempEventDiv.style.height = `16.7px`;
             tempEventDiv.innerHTML = '<span class="event-title">새 일정</span>';
             activeDayCol.appendChild(tempEventDiv);
             document.addEventListener('mousemove', handleMouseMove);
@@ -566,7 +602,7 @@
             const h = document.createElement('div'); h.className = 'resize-handle'; b.appendChild(h);
             h.onmousedown = (e) => {
                 if(!isEditMode) return; e.stopPropagation();
-                isDraggingBlock = true; b.draggable = false; // 드래그 방지
+                isDraggingBlock = true; b.draggable = false;
                 const startY = e.clientY, startH = b.offsetHeight;
                 let moved = false;
                 const onMove = (me) => { 

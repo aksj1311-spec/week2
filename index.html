@@ -320,7 +320,7 @@
         lockBtn.addEventListener('click', toggleLockMode);
 
         /** 테마 및 색상 **/
-                const palettes = {
+        const palettes = {
             pink:    ['#FFD9EC', '#FFADBC', '#FF8E9E', '#FFB7C5', '#FF6B81', '#FFC1CC'],
             blue:    ['#B2EBF4', '#81D4FA', '#4FC3F7', '#29B6F6', '#80DEEA', '#B3E5FC'],
             purple:  ['#DAD9FF', '#B39DDB', '#9575CD', '#CE93D8', '#B388FF', '#D1C4E9'],
@@ -339,7 +339,6 @@
         function getThemeColorForTitle(title) {
             if (!title) title = '새 일정';
             const colors = palettes[currentTheme] || palettes['pink'];
-            // 제목의 해시값을 사용하여 색상 배열에서 인덱스 결정 (일관성 유지)
             const index = getHashCode(title) % colors.length;
             return colors[index];
         }
@@ -365,14 +364,10 @@
                     return targetDate >= evDate && targetDate.getDay() === evDate.getDay();
                 }
                 return false;
-            });
+            }).sort((a, b) => a.startTime - b.startTime);
         }
         function isEventCompleted(ev, dateStr) { return ev.completedDates.includes(ev.isRoutine ? dateStr : ev.date); }
-        function rgbToHex(rgb) {
-            const res = rgb.match(/\\d+/g);
-            return res ? "#" + res.slice(0,3).map(x => parseInt(x).toString(16).padStart(2,'0')).join('') : "#ffffff";
-        }
-
+        
         /** 일정 생성 및 드래그 **/
         let isCreating = false, dragStartY = 0, tempEventDiv = null, activeDayCol = null, isDraggingBlock = false;
         function handleMouseDown(e) {
@@ -384,7 +379,7 @@
             tempEventDiv.className = 'event-block temp-event';
             tempEventDiv.style.backgroundColor = getThemeColorForTitle('새 일정');
             tempEventDiv.style.top = `${dragStartY}px`;
-            tempEventDiv.style.height = `50px`;
+            tempEventDiv.style.height = `16.7px`; // 최소 크기로 시작
             tempEventDiv.innerHTML = '<span class="event-title">새 일정</span>';
             activeDayCol.appendChild(tempEventDiv);
             document.addEventListener('mousemove', handleMouseMove);
@@ -416,67 +411,63 @@
             const tasks = document.getElementById('autoTasks').value.split('\n').map(t=>t.trim()).filter(t=>t);
             events = events.filter(ev => !(ev.date === dateStr && ev.isAuto));
             let scheduled = [];
-            
             const currentEvs = getEventsForDate(dateStr);
             const meals = [{t:'🍴 점심', s:12, e:13}, {t:'🍴 저녁', s:18, e:19}];
+            let scheduledMeals = new Set();
             
             function available(s, e) {
                 if (s < 9 || e > 24) return false;
-                return ![...currentEvs, ...scheduled].some(ev => {
-                    const overlap = s < ev.endTime && e > ev.startTime;
-                    return overlap;
-                });
+                return ![...currentEvs, ...scheduled].some(ev => s < ev.endTime && e > ev.startTime);
             }
 
             let nextTime = 9;
             tasks.forEach(t => {
                 let dur = t.length < 5 ? 1 : 1.5;
-                let placed = false;
                 
-                while (nextTime + dur <= 24) {
-                    // 식사 시간 체크 및 자동 삽입
-                    const meal = meals.find(m => !scheduled.some(s => s.title === m.t) && nextTime >= m.s);
-                    if (meal) {
-                        if (available(meal.s, meal.e)) {
-                            scheduled.push({id:'ai_'+Math.random(), title:meal.t, date:dateStr, startTime:meal.s, endTime:meal.e, color:'#FFF9C4', isRoutine:false, completedDates:[], isAuto:true});
-                            nextTime = meal.e;
+                meals.forEach(m => {
+                    if (!scheduledMeals.has(m.t) && nextTime >= m.s) {
+                        let ms = nextTime;
+                        while (ms + 1 <= 24) {
+                            if (available(ms, ms + 1)) {
+                                scheduled.push({id:'ai_'+Math.random(), title:m.t, date:dateStr, startTime:ms, endTime:ms+1, color:'#FFF9C4', isRoutine:false, completedDates:[], isAuto:true});
+                                scheduledMeals.add(m.t);
+                                nextTime = ms + 1;
+                                break;
+                            }
+                            ms += 0.25;
                         }
                     }
+                });
 
+                while (nextTime + dur <= 24) {
                     if (available(nextTime, nextTime + dur)) {
                         scheduled.push({id:'ai_'+Math.random(), title:t, date:dateStr, startTime:nextTime, endTime:nextTime+dur, color:getThemeColorForTitle(t), isRoutine:false, completedDates:[], isAuto:true});
                         nextTime += dur;
-                        placed = true;
-                        
-                        // 휴식 시간 (20분) 추가
                         if (available(nextTime, nextTime + 0.33)) {
                             scheduled.push({id:'ai_br_'+Math.random(), title:'☕ 휴식', date:dateStr, startTime:nextTime, endTime:nextTime+0.33, color:'#F5F5F5', isRoutine:false, completedDates:[], isAuto:true});
                             nextTime += 0.33;
                         }
                         break;
                     }
-                    nextTime += 0.25; // 15분 단위로 이동하며 빈 공간 탐색
+                    nextTime += 0.25;
                 }
             });
 
-            // 남은 식사 시간 강제 삽입 시도
             meals.forEach(m => {
-                if (!scheduled.some(s => s.title === m.t)) {
-                    let s = m.s;
-                    while (s + 1 <= 24) {
-                        if (available(s, s + 1)) {
-                            scheduled.push({id:'ai_'+Math.random(), title:m.t, date:dateStr, startTime:s, endTime:s+1, color:'#FFF9C4', isRoutine:false, completedDates:[], isAuto:true});
+                if (!scheduledMeals.has(m.t)) {
+                    let ms = m.s;
+                    while (ms + 1 <= 24) {
+                        if (available(ms, ms + 1)) {
+                            scheduled.push({id:'ai_'+Math.random(), title:m.t, date:dateStr, startTime:ms, endTime:ms+1, color:'#FFF9C4', isRoutine:false, completedDates:[], isAuto:true});
+                            scheduledMeals.add(m.t);
                             break;
                         }
-                        s += 0.5;
+                        ms += 0.25;
                     }
                 }
             });
 
-            events.push(...scheduled);
-            saveEvents();
-            currentDate = new Date(dateStr);
-            render();
+            events.push(...scheduled); saveEvents(); currentDate = new Date(dateStr); render();
             document.getElementById('autoRegenerateBtn').style.display = 'block';
         }
         document.getElementById('autoGenerateBtn').addEventListener('click', handleAutoSchedule);
@@ -575,11 +566,23 @@
             const h = document.createElement('div'); h.className = 'resize-handle'; b.appendChild(h);
             h.onmousedown = (e) => {
                 if(!isEditMode) return; e.stopPropagation();
+                isDraggingBlock = true; b.draggable = false; // 드래그 방지
                 const startY = e.clientY, startH = b.offsetHeight;
-                const onMove = (me) => { b.style.height = `${Math.max(16.7, startH + (me.clientY - startY))}px`; };
+                let moved = false;
+                const onMove = (me) => { 
+                    const diff = me.clientY - startY;
+                    if (Math.abs(diff) > 2) moved = true;
+                    if (moved) {
+                        b.style.height = `${Math.max(16.7, startH + diff)}px`; 
+                    }
+                };
                 const onUp = () => {
-                    ev.endTime = ev.startTime + (b.offsetHeight/50);
-                    saveEvents(); render(); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
+                    if (moved) {
+                        ev.endTime = ev.startTime + (b.offsetHeight/50);
+                        saveEvents(); render(); 
+                    }
+                    b.draggable = isEditMode; isDraggingBlock = false;
+                    document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
                 };
                 document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
             };
